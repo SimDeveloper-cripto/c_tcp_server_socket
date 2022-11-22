@@ -5,7 +5,7 @@ This is an implementation of a tcp server socket, all written in C language.
 ## Usage
 
 ```console
-./build.sh
+$ ./build.sh
 ```
 
 ## License
