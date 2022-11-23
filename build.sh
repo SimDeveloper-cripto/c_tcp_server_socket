@@ -1,1 +1,1 @@
-gcc -o main src/server.c src/main.c
+gcc -pthread -o main src/server.c src/main.c
