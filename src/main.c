@@ -5,7 +5,6 @@
 #include <string.h>
 #include <pthread.h>
 
-// costanti
 #define BUFFER_DIM 30000
 
 // new_socket == client_socket_descriptor.
