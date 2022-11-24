@@ -2,10 +2,17 @@
 
 This is an implementation of a tcp server socket, all written in C language.
 
-## Usage
+## How to test the server
 
+### Compiling the code
 ```console
+$ chmod +x build.sh
 $ ./build.sh
+```
+
+### Execute the code
+```console
+$ ./main
 ```
 
 ## License
