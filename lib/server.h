@@ -5,6 +5,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+// ...
+
 struct Server {
     int address_family; // To specify the address family we are using. In our case an Internet Protocol address.
     int service;        // To specify a connection-based protocol. In our case Transfer Control Protocol.

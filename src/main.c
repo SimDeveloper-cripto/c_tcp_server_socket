@@ -4,10 +4,17 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include <mysql.h>
+
+// HERE WE LIST MYSQL CONNECTION VARIABLES
+char* server = "localhost";
+char* user = " ";          /* Remeber to change this value. */
+char* password = " ";      /* Remeber to change this value. */
+char* database = " ";      /* Remeber to change this value. */
 
 #define BUFFER_DIM 30000
 
-// new_socket == client_socket_descriptor.
+// new_socket is the client_socket_descriptor.
 void* connection_handler(void* socket_desc) {
     int new_socket = (*(int*) socket_desc);
     char* welcome_message = "Hello! The server is all for you!";
@@ -46,7 +53,41 @@ void launch(struct Server* server) {
 }
 
 int main() {
-    struct Server server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10, launch); // INADDR_LOOPBACK
-    server.launch(&server);
+    // struct Server server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10, launch); // INADDR_LOOPBACK
+    // server.launch(&server);
+
+    MYSQL* connection;
+    MYSQL_RES* result;
+    MYSQL_ROW row;
+    int step = 0;
+
+    /* Connect to MySQL dbms */
+    connection = mysql_init(NULL);
+
+    if (!mysql_real_connect(connection, server, user,
+        password, database, 0, NULL, 0)) {
+            fprintf(stderr, "%s\n", mysql_error(connection));
+            exit(1);
+    }
+
+	/* How to send SQL query to the MySQL dmbs */
+	if (mysql_query(connection, "select nome from utenti")) {
+		fprintf(stderr, "%s\n", mysql_error(connection));
+		exit(1);
+	}
+   
+    /* Get the result */
+	result = mysql_use_result(connection);
+	
+	/* Output the result */
+	printf("Users found inside the table 'utenti'\n");
+	while ((row = mysql_fetch_row(result)) != NULL) {
+		++step;
+        printf("%d. ['%s']\n", step, row[0]);
+    }
+   
+	/* Close connection */
+	mysql_free_result(result);
+	mysql_close(connection);
     return 0;
 }
