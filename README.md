@@ -4,9 +4,9 @@ This is an implementation of a tcp server socket, all written in C language.
 
 ## About folders
 
-/bin contains the executable file.
-/lib contains all header files.
-/src contains all source files.
+/bin contains the executable file. <br />
+/lib contains all header files. <br />
+/src contains all source files. <br />
 
 ## How to test the server
 
