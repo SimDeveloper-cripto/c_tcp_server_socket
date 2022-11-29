@@ -2,6 +2,12 @@
 
 This is an implementation of a tcp server socket, all written in C language.
 
+## About folders
+
+/bin contains the executable file.
+/lib contains all header files.
+/src contains all source files.
+
 ## How to test the server
 
 ### Compiling the code
