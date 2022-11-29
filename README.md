@@ -12,6 +12,7 @@ $ ./build.sh
 
 ### Execute the code
 ```console
+$ cd bin
 $ ./main
 ```
 
