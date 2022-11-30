@@ -1,29 +1,52 @@
 #include "../lib/server.h"
+#include "../lib/main.h"
+#include "../lib/utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-#include <mysql.h>
-
-// HERE WE LIST MYSQL CONNECTION VARIABLES
-char* server = "localhost";
-char* user = " ";          /* Remeber to change this value. */
-char* password = " ";      /* Remeber to change this value. */
-char* database = " ";      /* Remeber to change this value. */
 
 #define BUFFER_DIM 30000
 
-// new_socket is the client_socket_descriptor.
+// SERVER RELATED FUNCTIONS PROTOTYPES
+void* connection_handler(void* socket_desc);
+void launch(struct Server* server);
+
+// MYSQL RELATED FUNCTIONS PROTOTYPES
+MYSQL* init_mysql_connection(MYSQL* connection, char* password);
+MYSQL_RES* make_query_get_result(MYSQL* connection, char* query);
+void make_query_print_result(MYSQL* connection, char* query);
+
+int main() {
+    int step = 0;
+    MYSQL_ROW row;
+    char* query = "select nome from utenti";
+    
+    // struct Server server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10, launch); // INADDR_LOOPBACK
+    // server.launch(&server);
+    MYSQL* connection = init_mysql_connection(connection, util_read_password_from_file());
+
+    printf("Users found inside the table 'utenti'\n");
+    make_query_print_result(connection, query);
+    
+	// DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
+	mysql_close(connection);
+    return 0;
+}
+
+// SERVER RELATED FUNCTIONS
 void* connection_handler(void* socket_desc) {
     int new_socket = (*(int*) socket_desc);
     char* welcome_message = "Hello! The server is all for you!";
     char buffer[BUFFER_DIM];
+
     read(new_socket, buffer, BUFFER_DIM);
     printf("    [+ +] Message received from client: %s", buffer);
+
     write(new_socket, welcome_message, strlen(welcome_message));
-    // send(client_socket, welcome_message, strlen(welcome_message), 0); || send(client_socket, welcome_message, sizeof(welcome_message), 0);
     printf("    [+ +] Server's welcome message sent to client.\n");
+
     close(new_socket);
 }
 
@@ -52,42 +75,44 @@ void launch(struct Server* server) {
     }
 }
 
-int main() {
-    // struct Server server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10, launch); // INADDR_LOOPBACK
-    // server.launch(&server);
-
-    MYSQL* connection;
-    MYSQL_RES* result;
-    MYSQL_ROW row;
-    int step = 0;
-
+// MYSQL RELATED FUNCTIONS
+MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
     /* Connect to MySQL dbms */
     connection = mysql_init(NULL);
-
-    if (!mysql_real_connect(connection, server, user,
-        password, database, 0, NULL, 0)) {
+    if (!mysql_real_connect(connection, server, user, password, database, 0, NULL, 0)) {
             fprintf(stderr, "%s\n", mysql_error(connection));
             exit(1);
     }
+    return connection;
+}
 
-	/* How to send SQL query to the MySQL dmbs */
-	if (mysql_query(connection, "select nome from utenti")) {
+MYSQL_RES* make_query_get_result(MYSQL* connection, char* query) {
+    MYSQL_ROW row;
+    int step = 0;
+	if (mysql_query(connection, query)) {
 		fprintf(stderr, "%s\n", mysql_error(connection));
 		exit(1);
 	}
-   
-    /* Get the result */
-	result = mysql_use_result(connection);
-	
-	/* Output the result */
-	printf("Users found inside the table 'utenti'\n");
+	MYSQL_RES* result = mysql_use_result(connection);
 	while ((row = mysql_fetch_row(result)) != NULL) {
 		++step;
         printf("%d. ['%s']\n", step, row[0]);
     }
-   
-	/* Close connection */
+    return result;
+}
+
+void make_query_print_result(MYSQL* connection, char* query) {
+    MYSQL_ROW row;
+    int step = 0;
+	if (mysql_query(connection, query)) {
+		fprintf(stderr, "%s\n", mysql_error(connection));
+		exit(1);
+	}
+    
+	MYSQL_RES* result = mysql_use_result(connection);
+	while ((row = mysql_fetch_row(result)) != NULL) {
+		++step;
+        printf("%d. ['%s']\n", step, row[0]);
+    }
 	mysql_free_result(result);
-	mysql_close(connection);
-    return 0;
 }
