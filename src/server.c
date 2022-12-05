@@ -4,7 +4,7 @@
 
 struct Server create_server(int address_family, int service, int protocol, u_long interface, int port, 
     int backlog, void (*launch)(struct Server* server)) {
-
+    int opt = 1;
     struct Server server;
 
     server.address_family = address_family;
@@ -20,11 +20,16 @@ struct Server create_server(int address_family, int service, int protocol, u_lon
 
     // Lets create the socket; we return a socket descriptor.
     server.socket = socket(server.address_family, server.service, server.protocol);
-    if (server.socket == 0) {
+    if (server.socket < 0) {
         perror("[-] Socket failed.\n");
         exit(1); // Exiting with code 1 implies a failure.
     }
     puts("[+] Server socket created.");
+
+    if (setsockopt(server.socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        perror("[-] setsockopt failed.\n");
+        exit(1);
+    }
 
     if (bind(server.socket, (struct sockaddr*) &server.address, sizeof(server.address)) < 0) {
         perror("[-] Socket bind failed.");

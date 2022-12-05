@@ -33,6 +33,8 @@ int main() {
     make_query_print_result(connection, query);
     
 	mysql_close(connection); // DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
+    
+    printf("PROGRAM ENDED STATUS [ OK ]\n");
     return 0;
 }
 
