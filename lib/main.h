@@ -7,9 +7,8 @@
 
 // HERE WE LIST MYSQL CONNECTION VARIABLES
 char* server = "localhost";
-char* user = "simone";          /* Remeber to change this value. */
-char* database = "mytest";      /* Remeber to change this value. */
-// char* password = "";            /* Remeber to change this value. */
+char* user = "root";            /* Remeber to change this value. */
+char* database = "history4fun"; /* Remeber to change this value. */
 
 // FUNCTIONS
 

@@ -1,6 +1,9 @@
 #include "../lib/server.h"
 #include "../lib/main.h"
+
+#define UTILS_H_IMPLEMENTATION
 #include "../lib/utils.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -21,17 +24,15 @@ void make_query_print_result(MYSQL* connection, char* query);
 int main() {
     int step = 0;
     MYSQL_ROW row;
-    char* query = "select nome from utenti";
+    char* query = "select * from users";
     
     // struct Server server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10, launch); // INADDR_LOOPBACK
     // server.launch(&server);
     MYSQL* connection = init_mysql_connection(connection, util_read_password_from_file());
 
-    printf("Users found inside the table 'utenti'\n");
     make_query_print_result(connection, query);
     
-	// DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
-	mysql_close(connection);
+	mysql_close(connection); // DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
     return 0;
 }
 
@@ -77,7 +78,6 @@ void launch(struct Server* server) {
 
 // MYSQL RELATED FUNCTIONS
 MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
-    /* Connect to MySQL dbms */
     connection = mysql_init(NULL);
     if (!mysql_real_connect(connection, server, user, password, database, 0, NULL, 0)) {
             fprintf(stderr, "%s\n", mysql_error(connection));
@@ -94,10 +94,6 @@ MYSQL_RES* make_query_get_result(MYSQL* connection, char* query) {
 		exit(1);
 	}
 	MYSQL_RES* result = mysql_use_result(connection);
-	while ((row = mysql_fetch_row(result)) != NULL) {
-		++step;
-        printf("%d. ['%s']\n", step, row[0]);
-    }
     return result;
 }
 
