@@ -21,19 +21,19 @@ MYSQL* init_mysql_connection(MYSQL* connection, char* password);
 MYSQL_RES* make_query_get_result(MYSQL* connection, char* query);
 void make_query_print_result(MYSQL* connection, char* query);
 
-int main() {
-    int step = 0;
-    MYSQL_ROW row;
-    char* query = "select * from users";
-    
-    // struct Server server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10, launch); // INADDR_LOOPBACK
-    // server.launch(&server);
-    MYSQL* connection = init_mysql_connection(connection, util_read_password_from_file());
+// GLOBAL VARIABLE SPACE
+MYSQL* connection;
+static pthread_t thread_pool[20];
+static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-    make_query_print_result(connection, query);
+int main(int argc, char** argv) {
+    // MYSQL_ROW row;
+    // char* query = "select * from users";
+    struct Server server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10, launch); // INADDR_LOOPBACK
+    server.launch(&server);
+    // make_query_print_result(connection, query);
     
 	mysql_close(connection); // DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
-    
     printf("PROGRAM ENDED STATUS [ OK ]\n");
     return 0;
 }
@@ -54,10 +54,14 @@ void* connection_handler(void* socket_desc) {
 }
 
 void launch(struct Server* server) {
+    connection = init_mysql_connection(connection, util_read_password_from_file());
+    int i = 0;
+    
+    printf("[+] MySQL service started.\n");
     printf("[+] Server is now waiting for connections.\n");
+
     while(1) {
         socklen_t address_len = sizeof(server->address);
-        pthread_t thread_id;
 
         int new_socket = accept(server->socket, (struct sockaddr*) &server->address, &address_len);
         
@@ -67,11 +71,18 @@ void launch(struct Server* server) {
         }
         printf("\n[+] Client connection accepted.\n");
 
-        if (pthread_create(&thread_id, NULL, connection_handler, (void*) &new_socket) < 0) {
+        if (pthread_create(&thread_pool[i++], NULL, connection_handler, (void*) &new_socket) < 0) {
             perror("[-] Could not create thread.");
             exit(1);
         }
         printf("    [+ +] Thread created for client requests.\n");
+        
+        if (i >= 10) {
+            i = 0;
+            while (i < 10)
+                pthread_join(thread_pool[i++], NULL);
+            i = 0;
+        }
         // struct sockaddr_in client_address;
         // int new_client_socket = accept(server->socket, (struct sockaddr*) &client_address, &address_len);
         // printf("\n[+] Client %s, connection accepted.\n", inet_ntoa(client_address.sin_addr));
