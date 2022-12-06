@@ -26,7 +26,7 @@ struct Server create_server(int address_family, int service, int protocol, u_lon
     }
     puts("[+] Server socket created.");
 
-    if (setsockopt(server.socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+    if (setsockopt(server.socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
         perror("[-] setsockopt failed.\n");
         exit(1);
     }

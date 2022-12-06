@@ -22,11 +22,12 @@ MYSQL_RES* make_query_get_result(MYSQL* connection, char* query);
 void make_query_print_result(MYSQL* connection, char* query);
 
 // GLOBAL VARIABLE SPACE
-MYSQL* connection;
+static MYSQL* connection;
 static pthread_t thread_pool[20];
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char** argv) {
+    pthread_mutex_init(&lock, NULL);
     // MYSQL_ROW row;
     // char* query = "select * from users";
     struct Server server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10, launch); // INADDR_LOOPBACK
@@ -34,12 +35,16 @@ int main(int argc, char** argv) {
     // make_query_print_result(connection, query);
     
 	mysql_close(connection); // DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
+    pthread_mutex_destroy(&lock);
+
     printf("PROGRAM ENDED STATUS [ OK ]\n");
     return 0;
 }
 
 // SERVER RELATED FUNCTIONS
 void* connection_handler(void* socket_desc) {
+    pthread_mutex_lock(&lock);
+    
     int new_socket = (*(int*) socket_desc);
     char* welcome_message = "Hello! The server is all for you!";
     char buffer[BUFFER_DIM];
@@ -50,7 +55,10 @@ void* connection_handler(void* socket_desc) {
     write(new_socket, welcome_message, strlen(welcome_message));
     printf("    [+ +] Server's welcome message sent to client.\n");
 
+    // memset(&buffer, 0, sizeof(buffer));
     close(new_socket);
+    
+    pthread_mutex_unlock(&lock);
 }
 
 void launch(struct Server* server) {
@@ -83,10 +91,10 @@ void launch(struct Server* server) {
                 pthread_join(thread_pool[i++], NULL);
             i = 0;
         }
-        // struct sockaddr_in client_address;
-        // int new_client_socket = accept(server->socket, (struct sockaddr*) &client_address, &address_len);
-        // printf("\n[+] Client %s, connection accepted.\n", inet_ntoa(client_address.sin_addr));
     }
+    // struct sockaddr_in client_address;
+    // int new_client_socket = accept(server->socket, (struct sockaddr*) &client_address, &address_len);
+    // printf("\n[+] Client %s, connection accepted.\n", inet_ntoa(client_address.sin_addr));
 }
 
 // MYSQL RELATED FUNCTIONS
