@@ -1,8 +1,8 @@
-#include "../lib/server.h"
-#include "../lib/main.h"
+#include "../include/server.h"
+#include "../include/main.h"
 
 #define UTILS_H_IMPLEMENTATION
-#include "../lib/utils.h"
+#include "../include/utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,41 +10,14 @@
 #include <string.h>
 #include <pthread.h>
 
-#define BUFFER_DIM 30000
+#define BUFFER_DIM 1024
 
-// SERVER RELATED FUNCTIONS PROTOTYPES
-void* connection_handler(void* socket_desc);
-void launch(struct Server* server);
-
-// MYSQL RELATED FUNCTIONS PROTOTYPES
-MYSQL* init_mysql_connection(MYSQL* connection, char* password);
-MYSQL_RES* make_query_get_result(MYSQL* connection, char* query);
-void make_query_print_result(MYSQL* connection, char* query);
-
-// GLOBAL VARIABLE SPACE
 static MYSQL* connection;
 static pthread_t thread_pool[20];
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-int main(int argc, char** argv) {
-    pthread_mutex_init(&lock, NULL);
-    // MYSQL_ROW row;
-    // char* query = "select * from users";
-    struct Server server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10, launch); // INADDR_LOOPBACK
-    server.launch(&server);
-    // make_query_print_result(connection, query);
-    
-	mysql_close(connection); // DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
-    pthread_mutex_destroy(&lock);
-
-    printf("PROGRAM ENDED STATUS [ OK ]\n");
-    return 0;
-}
-
-// SERVER RELATED FUNCTIONS
+// ---------- SERVER RELATED FUNCTIONS ---------- //
 void* connection_handler(void* socket_desc) {
-    pthread_mutex_lock(&lock);
-    
     int new_socket = (*(int*) socket_desc);
     char* welcome_message = "Hello! The server is all for you!";
     char buffer[BUFFER_DIM];
@@ -55,10 +28,11 @@ void* connection_handler(void* socket_desc) {
     write(new_socket, welcome_message, strlen(welcome_message));
     printf("    [+ +] Server's welcome message sent to client.\n");
 
-    // memset(&buffer, 0, sizeof(buffer));
-    close(new_socket);
-    
+    pthread_mutex_lock(&lock);
+    memset(&buffer, 0, sizeof(buffer));
     pthread_mutex_unlock(&lock);
+    
+    close(new_socket);
 }
 
 void launch(struct Server* server) {
@@ -75,7 +49,7 @@ void launch(struct Server* server) {
         
         if (new_socket < 0) {
             perror("[-] Could not accept client connection: take a look at client's terminal.");
-            exit(1); // exit(EXIT_FAILURE)
+            exit(1);
         }
         printf("\n[+] Client connection accepted.\n");
 
@@ -97,7 +71,7 @@ void launch(struct Server* server) {
     // printf("\n[+] Client %s, connection accepted.\n", inet_ntoa(client_address.sin_addr));
 }
 
-// MYSQL RELATED FUNCTIONS
+// ---------- MYSQL RELATED FUNCTIONS ---------- //
 MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
     connection = mysql_init(NULL);
     if (!mysql_real_connect(connection, server, user, password, database, 0, NULL, 0)) {
@@ -132,4 +106,19 @@ void make_query_print_result(MYSQL* connection, char* query) {
         printf("%d. ['%s']\n", step, row[0]);
     }
 	mysql_free_result(result);
+}
+
+int main(int argc, char** argv) {
+    pthread_mutex_init(&lock, NULL);
+    // MYSQL_ROW row;
+    // char* query = "select * from users";
+    struct Server server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10, launch); // INADDR_LOOPBACK
+    server.launch(&server);
+    // make_query_print_result(connection, query);
+    
+	mysql_close(connection); // DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
+    pthread_mutex_destroy(&lock);
+
+    printf("PROGRAM ENDED STATUS [ OK ]\n");
+    return 0;
 }
