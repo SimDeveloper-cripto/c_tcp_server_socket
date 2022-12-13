@@ -1,8 +1,8 @@
 # Developing a TCP Server Socket
 
-This is an implementation of a TCP server socket, all written in C language.
+This is an implementation of a TCP server socket, all written in C language. <br />
 To breefly explain what the server does, basically it handles connections from clients that need to be interfaced with a DBMS, in this case MySQL: i) the client sends to the server its data so that the server can perform queries ii) the server sends back to the client the results he retrieved.
-The development process of this project took place in a Linux environment, Ubuntu20.04 to be specific.
+<br /> The development process of this project took place in a Linux environment, Ubuntu20.04 to be specific.
 
 ## MySQL get started tutorial on Ubuntu20.04
 
