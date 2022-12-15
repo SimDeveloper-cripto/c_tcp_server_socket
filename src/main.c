@@ -39,7 +39,7 @@ void launch(struct Server* server) {
     connection = init_mysql_connection(connection, util_read_password_from_file());
     int i = 0;
     
-    printf("[+] MySQL service started.\n");
+    printf("[+] MySQL connection successful.\n");
     printf("[+] Server is now waiting for connections.\n");
 
     while(1) {
