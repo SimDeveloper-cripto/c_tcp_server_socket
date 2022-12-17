@@ -7,7 +7,7 @@ struct list_node_t {
     char* n_description; // artifact description for 'guest' and 'group'
     char* y_description; // artifact description for 'family' and 'school'
     char* e_description; // artifact description for 'expert'
-    char* area; // area defining where the artifact is placed in the museum
+    char* area;          // area defining where the artifact is placed in the museum
 
     // TODO: DO WE NEED TO ADD DATE AND COMMENT_DATE?
     // TODO: DO WE ADD POINTER TO TAIL (LASD LIKE)?
