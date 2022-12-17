@@ -1,4 +1,5 @@
 #include "../include/server.h"
+#include "../include/list.h"
 #include "../include/main.h"
 
 #define UTILS_H_IMPLEMENTATION
