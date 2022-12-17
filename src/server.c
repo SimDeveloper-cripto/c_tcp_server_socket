@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Server create_server(int address_family, int service, int protocol, u_long interface, int port, 
-    int backlog, void (*launch)(struct Server* server)) {
+server_t create_server(int address_family, int service, int protocol, u_long interface, int port, 
+    int backlog) {
     int opt = 1;
-    struct Server server;
+    server_t server;
 
     server.address_family = address_family;
     server.service = service;
@@ -18,11 +18,10 @@ struct Server create_server(int address_family, int service, int protocol, u_lon
     server.address.sin_port = htons(port);
     server.address.sin_addr.s_addr = htonl(interface);
 
-    // Lets create the socket; we return a socket descriptor.
     server.socket = socket(server.address_family, server.service, server.protocol);
     if (server.socket < 0) {
         perror("[-] Socket failed.\n");
-        exit(1); // Exiting with code 1 implies a failure.
+        exit(1);
     }
     puts("[+] Server socket created.");
 
@@ -42,8 +41,7 @@ struct Server create_server(int address_family, int service, int protocol, u_lon
         exit(1);
     }
 
-    server.launch = launch;
-    printf("[+] Sever is up at localhost: %d\n", server.port);
+    printf("[+] Sever is up at localhost:%d\n", server.port);
 
     return server;
 }

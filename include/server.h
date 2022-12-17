@@ -7,7 +7,7 @@
 
 // ...
 
-struct Server {
+typedef struct {
     int address_family; // To specify the address family we are using. In our case an Internet Protocol address.
     int service;        // To specify a connection-based protocol. In our case Transfer Control Protocol.
     int protocol;
@@ -18,12 +18,12 @@ struct Server {
     int socket;         // It specifies the socket descriptor.
 
     struct sockaddr_in address;
-
-    void (*launch) (struct Server* server);
-};
+} server_t;
 
 // [SERVER CONSTRUCTOR]
-struct Server create_server(int address_family, int service, int protocol, u_long interface, int port,
-    int backlog, void (*launch)(struct Server* server));
+server_t create_server(int address_family, int service, int protocol, u_long interface, int port,
+    int backlog);
+
+void launch(server_t* server);
 
 #endif /* SERVER_H */

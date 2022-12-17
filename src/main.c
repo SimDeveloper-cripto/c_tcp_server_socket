@@ -16,7 +16,7 @@ static MYSQL* connection;
 static pthread_t thread_pool[20];
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-// ---------- SERVER RELATED FUNCTIONS ---------- //
+// ------------------------------ SERVER RELATED FUNCTIONS ------------------------------ //
 void* connection_handler(void* socket_desc) {
     int new_socket = (*(int*) socket_desc);
     char* welcome_message = "Hello! The server is all for you!";
@@ -35,7 +35,7 @@ void* connection_handler(void* socket_desc) {
     close(new_socket);
 }
 
-void launch(struct Server* server) {
+void launch(server_t* server) {
     connection = init_mysql_connection(connection, util_read_password_from_file());
     int i = 0;
     
@@ -66,12 +66,9 @@ void launch(struct Server* server) {
             i = 0;
         }
     }
-    // struct sockaddr_in client_address;
-    // int new_client_socket = accept(server->socket, (struct sockaddr*) &client_address, &address_len);
-    // printf("\n[+] Client %s, connection accepted.\n", inet_ntoa(client_address.sin_addr));
 }
 
-// ---------- MYSQL RELATED FUNCTIONS ---------- //
+// ------------------------------ MYSQL RELATED FUNCTIONS ------------------------------ //
 MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
     connection = mysql_init(NULL);
     if (!mysql_real_connect(connection, server, user, password, database, 0, NULL, 0)) {
@@ -108,12 +105,15 @@ void make_query_print_result(MYSQL* connection, char* query) {
 	mysql_free_result(result);
 }
 
+// ------------------------------ MAIN  ------------------------------ //
 int main(int argc, char** argv) {
     pthread_mutex_init(&lock, NULL);
+
+    server_t server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10);
+    launch(&server);
+    
     // MYSQL_ROW row;
     // char* query = "select * from users";
-    struct Server server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10, launch); // INADDR_LOOPBACK
-    server.launch(&server);
     // make_query_print_result(connection, query);
     
 	mysql_close(connection); // DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
