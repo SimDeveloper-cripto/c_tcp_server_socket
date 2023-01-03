@@ -3,6 +3,7 @@
         "pthread.h": "c",
         "in.h": "c",
         "server.h": "c",
-        "utils.h": "c"
+        "utils.h": "c",
+        "string.h": "c"
     }
 }

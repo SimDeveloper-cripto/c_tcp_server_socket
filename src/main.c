@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+// #include <json-c/json.h>
 
 #define BUFFER_DIM 1024
 
@@ -32,7 +33,18 @@ void* connection_handler(void* socket_desc) {
     pthread_mutex_lock(&lock);
     memset(&buffer, 0, sizeof(buffer));
     pthread_mutex_unlock(&lock);
-    
+
+/*
+    read(new_socket, buffer, BUFFER_DIM);
+    if (strcmp(buffer, "LOGIN") == 0) {
+        printf("LOGIN is chosen.\n");
+    }
+*/ 
+
+    pthread_mutex_lock(&lock);
+    memset(&buffer, 0, sizeof(buffer));
+    pthread_mutex_unlock(&lock);
+
     close(new_socket);
 }
 
