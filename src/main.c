@@ -58,7 +58,7 @@ void launch(server_t* server) {
             perror("[-] Could not create thread.");
             exit(1);
         }
-        printf("    [+ +] Thread created for client requests.\n");
+		printf("    [+ +] Thread created for client requests.\n");
         
         if (i >= 10) {
             i = 0;
