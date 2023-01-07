@@ -21,30 +21,29 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 // ------------------------------ SERVER RELATED FUNCTIONS ------------------------------ //
 void* connection_handler(void* socket_desc) {
     int new_socket = (*(int*) socket_desc);
-    char* welcome_message = "Hello! The server is all for you!";
+    char* welcome_message = "Hello! I am the server!";
     char buffer[BUFFER_DIM];
 
-    read(new_socket, buffer, BUFFER_DIM);
+    // read(new_socket, buffer, BUFFER_DIM);
+    recv(new_socket, buffer, BUFFER_DIM, 0);
     printf("    [+ +] Message received from client: %s", buffer);
 
-    write(new_socket, welcome_message, strlen(welcome_message));
+    // write(new_socket, welcome_message, strlen(welcome_message));
+    send(new_socket, welcome_message, strlen(welcome_message), 0);
+    printf("\n");
     printf("    [+ +] Server's welcome message sent to client.\n");
+    printf("\n[+] The server is waiting for flags.");
+    
+    memset(&buffer, 0, sizeof(buffer)); // buffer[0] = '\0';
 
-    pthread_mutex_lock(&lock);
-    memset(&buffer, 0, sizeof(buffer));
-    pthread_mutex_unlock(&lock);
-
-/*
-    read(new_socket, buffer, BUFFER_DIM);
-    if (strcmp(buffer, "LOGIN") == 0) {
-        printf("LOGIN is chosen.\n");
+    recv(new_socket, buffer, BUFFER_DIM, 0);
+    while (strcmp(buffer, "LOGIN") != 0) {
+        sleep(1);
+        recv(new_socket, buffer, BUFFER_DIM, 0);
     }
-*/ 
+    printf("\n[+] Flag received: %s", buffer);
 
-    pthread_mutex_lock(&lock);
-    memset(&buffer, 0, sizeof(buffer));
-    pthread_mutex_unlock(&lock);
-
+    printf("[+] Terminating connection with client: closing socket.\n");
     close(new_socket);
 }
 
