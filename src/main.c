@@ -24,26 +24,29 @@ void* connection_handler(void* socket_desc) {
     char* welcome_message = "Hello! I am the server!";
     char buffer[BUFFER_DIM];
 
-    // read(new_socket, buffer, BUFFER_DIM);
-    recv(new_socket, buffer, BUFFER_DIM, 0);
+    read(new_socket, buffer, BUFFER_DIM);
     printf("    [+ +] Message received from client: %s", buffer);
 
-    // write(new_socket, welcome_message, strlen(welcome_message));
-    send(new_socket, welcome_message, strlen(welcome_message), 0);
+    write(new_socket, welcome_message, strlen(welcome_message));
     printf("\n");
-    printf("    [+ +] Server's welcome message sent to client.\n");
-    printf("\n[+] The server is waiting for flags.");
+    printf("    [+ +] Server's welcome message sent to client.\n\n");
+    printf("    [+ +] The server is now waiting for flags.");
     
     memset(&buffer, 0, sizeof(buffer)); // buffer[0] = '\0';
 
-    recv(new_socket, buffer, BUFFER_DIM, 0);
+    /* TODO
+        CREATE LOGIC FOR SERVER TO MANAGE CLIENT REQUESTS.
+    */
+
+    read(new_socket, buffer, BUFFER_DIM);
     while (strcmp(buffer, "LOGIN") != 0) {
         sleep(1);
-        recv(new_socket, buffer, BUFFER_DIM, 0);
+        printf("..\n");
+        read(new_socket, buffer, BUFFER_DIM);
     }
-    printf("\n[+] Flag received: %s", buffer);
+    printf("\n  [+ +] Flag received: %s\n", buffer);
 
-    printf("[+] Terminating connection with client: closing socket.\n");
+    printf("\n[+] Terminating connection with client: closing socket.\n");
     close(new_socket);
 }
 
@@ -54,6 +57,7 @@ void launch(server_t* server) {
     printf("[+] MySQL connection successful.\n");
     printf("[+] Server is now waiting for connections.\n");
 
+    // CONCURRENT SERVER: IT CAN ACCEPT MULTI-CLIENT CONNECTIONS
     while(1) {
         socklen_t address_len = sizeof(server->address);
 
