@@ -48,6 +48,7 @@ void* connection_handler(void* socket_desc) {
 
     printf("\n[+] Terminating connection with client: closing socket.\n");
     close(new_socket);
+    return EXIT_SUCCESS;
 }
 
 void launch(server_t* server) {
@@ -60,7 +61,6 @@ void launch(server_t* server) {
     // CONCURRENT SERVER: IT CAN ACCEPT MULTI-CLIENT CONNECTIONS
     while(1) {
         socklen_t address_len = sizeof(server->address);
-
         int new_socket = accept(server->socket, (struct sockaddr*) &server->address, &address_len);
         
         if (new_socket < 0) {
@@ -68,7 +68,6 @@ void launch(server_t* server) {
             exit(1);
         }
         printf("\n[+] Client connection accepted.\n");
-
         if (pthread_create(&thread_pool[i++], NULL, connection_handler, (void*) &new_socket) < 0) {
             perror("[-] Could not create thread.");
             exit(1);
@@ -95,8 +94,6 @@ MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
 }
 
 MYSQL_RES* make_query_get_result(MYSQL* connection, char* query) {
-    MYSQL_ROW row;
-    int step = 0;
 	if (mysql_query(connection, query)) {
 		fprintf(stderr, "%s\n", mysql_error(connection));
 		exit(1);

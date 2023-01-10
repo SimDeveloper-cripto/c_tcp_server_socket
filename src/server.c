@@ -41,7 +41,7 @@ server_t create_server(int address_family, int service, int protocol, u_long int
         exit(1);
     }
 
-    printf("[+] Sever is up at localhost:%d\n", server.port);
+    printf("[+] Sever is up at 'localhost:%d'\n", server.port);
 
     return server;
 }
