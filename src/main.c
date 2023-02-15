@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include <stdbool.h>
 // #include <json-c/json.h>
 
 #define BUFFER_DIM 1024
@@ -20,6 +21,7 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 // ------------------------------ SERVER RELATED FUNCTIONS ------------------------------ //
 void* connection_handler(void* socket_desc) {
+    bool flag_stop = false;
     int new_socket = (*(int*) socket_desc);
     char* welcome_message = "Hello! I am the server!";
     char buffer[BUFFER_DIM];
@@ -31,21 +33,30 @@ void* connection_handler(void* socket_desc) {
     printf("\n");
     printf("    [+ +] Server's welcome message sent to client.\n\n");
     printf("    [+ +] The server is now waiting for flags.");
-    
+
     memset(&buffer, 0, sizeof(buffer)); // buffer[0] = '\0';
 
-    /* TODO
-        CREATE LOGIC FOR SERVER TO MANAGE CLIENT REQUESTS.
-    */
+    while(!flag_stop) {
+        sleep(1);
+        read(new_socket, buffer, BUFFER_DIM);
 
-    read(new_socket, buffer, BUFFER_DIM);
+        if (strcmp(buffer, "LOGIN") == 0) {
+            printf("\n  [+ +] Flag received: %s\n", buffer);
+            memset(&buffer, 0, sizeof(buffer));
+        } else if (strcmp(buffer, "STOP_CONNECTION") == 0) {
+            printf("\n  [+ +] Flag received: %s\n", buffer);
+            memset(&buffer, 0, sizeof(buffer));
+            flag_stop = true;
+        }
+    }
+/*
     while (strcmp(buffer, "LOGIN") != 0) {
         sleep(1);
         printf("..\n");
         read(new_socket, buffer, BUFFER_DIM);
     }
     printf("\n  [+ +] Flag received: %s\n", buffer);
-
+*/
     printf("\n[+] Terminating connection with client: closing socket.\n");
     close(new_socket);
     return EXIT_SUCCESS;
