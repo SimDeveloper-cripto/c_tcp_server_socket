@@ -23,37 +23,28 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 void* connection_handler(void* socket_desc) {
     bool flag_stop = false;
     int new_socket = (*(int*) socket_desc);
-    char* welcome_message = "Hello! I am the server!";
     char buffer[BUFFER_DIM];
-    char ok[2] = "OK";
-
-    read(new_socket, buffer, BUFFER_DIM);
-    printf("    [+ +] Message received from client: %s", buffer);
-
-    write(new_socket, welcome_message, strlen(welcome_message));
-    printf("\n");
-    printf("    [+ +] Server's welcome message sent to client.\n");
-    memset(&buffer, 0, sizeof(buffer));
 
     while(!flag_stop) {
-        read(new_socket, buffer, BUFFER_DIM);
-        if (strcmp(buffer, "LOGIN") == 0) {
-            printf("\n    [+ +] LOGIN");
-            
-            write(new_socket, ok, strlen(ok));
+        printf("    [+ +] Server's thread is now waiting for flags.\n");
+        memset(&buffer, 0, sizeof(buffer));
+        
+        if (read(new_socket, buffer, BUFFER_DIM) < 0) { 
+            continue;
+        } else if (strcmp(buffer, "LOGIN") == 0) {
+            write(new_socket, "OK", sizeof("OK"));
+            printf("sent.\n");
             
             read(new_socket, buffer, BUFFER_DIM);
-            printf("Email: %s", buffer);
-            
-            read(new_socket, buffer, BUFFER_DIM);
-            printf("Password: %s", buffer);
+            printf("READ: %s", buffer);
         } else if (strcmp(buffer, "STOP_CONNECTION") == 0) {
-            printf("\n    [+ +] Flag received: %s\n", buffer);
+            // printf("\n    [+ +] STOP_CONNECTION, procedure is starting.");
             memset(&buffer, 0, sizeof(buffer));
             flag_stop = true;
         }
     }
 
+    memset(&buffer, 0, sizeof(buffer));
     printf("\n[+] Terminating connection with client: closing socket.\n");
     close(new_socket);
     return EXIT_SUCCESS;
