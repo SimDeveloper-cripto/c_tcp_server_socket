@@ -11,10 +11,10 @@
 #include <string.h>
 #include <pthread.h>
 #include <stdbool.h>
-// #include <json-c/json.h>
+#include <json-c/json.h>
 
 #define BUFFER_DIM 1024
-#define BUFFER_FLAG_DIM 6
+// #define BUFFER_FLAG_DIM 6
 
 static MYSQL* connection;
 static pthread_t thread_pool[20];
@@ -24,28 +24,48 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 void* connection_handler(void* socket_desc) {
     int new_socket = (*(int*) socket_desc);
     char* ack_message = "OK";
-    char buffer_msg[BUFFER_DIM];
-    char flag_buffer[BUFFER_FLAG_DIM];
+    char buffer_json_msg[BUFFER_DIM];
+    // char flag_buffer[BUFFER_FLAG_DIM];
 
-    memset(&buffer_msg, 0, sizeof(buffer_msg));
-    memset(&flag_buffer, 0, sizeof(flag_buffer));
-    while(1) {
-        printf("\n    [+ +] Server's thread is now waiting for flags.\n");
+    memset(&buffer_json_msg, 0, sizeof(buffer_json_msg));
+    // memset(&flag_buffer, 0, sizeof(flag_buffer));
+    
+    bool stop = false;
+    while(!stop) {
+        // printf("\n    [+ +] Server's thread is now waiting.\n");
 
-        read(new_socket, flag_buffer, BUFFER_FLAG_DIM);
-        flag_buffer[BUFFER_FLAG_DIM - 1] = '\0';
-        printf("    [+ +] Flag '%s' received.\n", flag_buffer);
+        read(new_socket, buffer_json_msg, BUFFER_DIM);
+        buffer_json_msg[BUFFER_DIM - 1] = '\0';
 
+        struct json_object* parsed_json = json_tokener_parse(buffer_json_msg);
+        struct json_object* flag;
+        json_object_object_get_ex(parsed_json, "flag", &flag);
+        // fprintf(stdout, "  FLAG: %s\n", json_object_get_string(flag));
+
+        const char* myflag = json_object_get_string(flag);
+        if (strcmp(myflag, "LOGIN") == 0) {
+            fprintf(stdout, "      [+ + +] Client has requested to login.\n");
+
+            struct json_object* email;
+            struct json_object* pass;
+
+            json_object_object_get_ex(parsed_json, "email", &email);
+            json_object_object_get_ex(parsed_json, "password", &pass);
+
+            fprintf(stdout, "  EMAIL: %s\n", json_object_get_string(email));
+            fprintf(stdout, "  PASSWORD: %s\n", json_object_get_string(pass));
+        }
+/*
         if (strcmp(flag_buffer, "LOGIN") == 0) {
             sleep(1);
             write(new_socket, ack_message, strlen(ack_message));
             printf("      [+ + +] OK sent to client.\n");
 
-            read(new_socket, buffer_msg, BUFFER_DIM);
-            printf("      [+ + +] READ: %s\n", buffer_msg);
-        } else if (strcmp(flag_buffer, "STOP_C") == 0) {
-            break;
-        }
+            // read(new_socket, buffer_msg, BUFFER_DIM);
+            // printf("      [+ + +] READ: %s\n", buffer_msg);
+        } else if (strcmp(flag_buffer, "STOP_C") == 0) { stop = true; }
+*/ 
+        stop = true;
     }
 
     printf("\n[+] Terminating connection with client: closing socket.\n");
@@ -115,7 +135,7 @@ void make_query_print_result(MYSQL* connection, char* query) {
 	MYSQL_RES* result = mysql_use_result(connection);
 	while ((row = mysql_fetch_row(result)) != NULL) {
 		++step;
-        printf("%d. ['%s']\n", step, row[0]);
+        fprintf(stdout, "%d. ['%s']\n", step, row[0]);
     }
 	mysql_free_result(result);
 }
