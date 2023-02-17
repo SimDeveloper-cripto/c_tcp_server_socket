@@ -14,6 +14,7 @@
 // #include <json-c/json.h>
 
 #define BUFFER_DIM 1024
+#define BUFFER_FLAG_DIM 6
 
 static MYSQL* connection;
 static pthread_t thread_pool[20];
@@ -21,30 +22,32 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 // ------------------------------ SERVER RELATED FUNCTIONS ------------------------------ //
 void* connection_handler(void* socket_desc) {
-    bool flag_stop = false;
     int new_socket = (*(int*) socket_desc);
-    char buffer[BUFFER_DIM];
+    char* ack_message = "OK";
+    char buffer_msg[BUFFER_DIM];
+    char flag_buffer[BUFFER_FLAG_DIM];
 
-    while(!flag_stop) {
-        printf("    [+ +] Server's thread is now waiting for flags.\n");
-        memset(&buffer, 0, sizeof(buffer));
-        
-        if (read(new_socket, buffer, BUFFER_DIM) < 0) { 
-            continue;
-        } else if (strcmp(buffer, "LOGIN") == 0) {
-            write(new_socket, "OK", sizeof("OK"));
-            printf("sent.\n");
-            
-            read(new_socket, buffer, BUFFER_DIM);
-            printf("READ: %s", buffer);
-        } else if (strcmp(buffer, "STOP_CONNECTION") == 0) {
-            // printf("\n    [+ +] STOP_CONNECTION, procedure is starting.");
-            memset(&buffer, 0, sizeof(buffer));
-            flag_stop = true;
+    memset(&buffer_msg, 0, sizeof(buffer_msg));
+    memset(&flag_buffer, 0, sizeof(flag_buffer));
+    while(1) {
+        printf("\n    [+ +] Server's thread is now waiting for flags.\n");
+
+        read(new_socket, flag_buffer, BUFFER_FLAG_DIM);
+        flag_buffer[BUFFER_FLAG_DIM - 1] = '\0';
+        printf("    [+ +] Flag '%s' received.\n", flag_buffer);
+
+        if (strcmp(flag_buffer, "LOGIN") == 0) {
+            sleep(1);
+            write(new_socket, ack_message, strlen(ack_message));
+            printf("      [+ + +] OK sent to client.\n");
+
+            read(new_socket, buffer_msg, BUFFER_DIM);
+            printf("      [+ + +] READ: %s\n", buffer_msg);
+        } else if (strcmp(flag_buffer, "STOP_C") == 0) {
+            break;
         }
     }
 
-    memset(&buffer, 0, sizeof(buffer));
     printf("\n[+] Terminating connection with client: closing socket.\n");
     close(new_socket);
     return EXIT_SUCCESS;
