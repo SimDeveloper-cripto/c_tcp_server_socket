@@ -30,9 +30,10 @@ void manage_login(struct json_object* parsed_json) {
 
     const char* email = json_object_get_string(json_email);
     const char* pass = json_object_get_string(json_pass);
-    char query[1024];
-    snprintf(query, 1024, "SELECT * FROM users WHERE email='%s' AND password='%s'", email, pass);
+    char query[256];
 
+    // snprintf(query, sizeof(query), "SELECT COUNT(*) FROM users WHERE email='%s' AND password='%s'", email, pass);
+    snprintf(query, sizeof(query), "SELECT * FROM users WHERE email='%s' AND password='%s'", email, pass);
     // make_query_print_result(connection, query);
 
     if (exists(connection, query)) {
@@ -138,18 +139,10 @@ bool exists(MYSQL* connection, char query[]) {
 	MYSQL_RES* result = mysql_store_result(connection);
     if (result == NULL) return false;
     
-    int num_rows = mysql_num_rows(result);
-    if (num_rows != 1) {
-        mysql_free_result(result);
-        return false;
-    }
-
-    MYSQL_ROW row = mysql_fetch_row(result);
-    int count = atoi(row[0]);
+    int num_rows = mysql_num_rows(result); 
 	mysql_free_result(result);
     pthread_mutex_unlock(&lock);
-
-    return (count > 0);
+    return (num_rows > 0);
 }
 
 // ------------------------------ MAIN  ------------------------------ //
