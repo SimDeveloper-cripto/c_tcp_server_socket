@@ -13,59 +13,56 @@
 #include <stdbool.h>
 #include <json-c/json.h>
 
-#define BUFFER_DIM 1024
-// #define BUFFER_FLAG_DIM 6
+#define BUFFER_DIM 2048
 
 static MYSQL* connection;
 static pthread_t thread_pool[20];
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 // ------------------------------ SERVER RELATED FUNCTIONS ------------------------------ //
+void manage_login(struct json_object* parsed_json) {
+    struct json_object* json_email;
+    struct json_object* json_pass;
+    fprintf(stdout, "      [+ + +] Client has requested to login.\n");
+            
+    json_object_object_get_ex(parsed_json, "email", &json_email);
+    json_object_object_get_ex(parsed_json, "password", &json_pass);
+
+    const char* email = json_object_get_string(json_email);
+    const char* pass = json_object_get_string(json_pass);
+    char query[1024];
+    snprintf(query, 1024, "SELECT * FROM users WHERE email='%s' AND password='%s'", email, pass);
+
+    // make_query_print_result(connection, query);
+
+    if (exists(connection, query)) {
+        fprintf(stdout, "      [+ + +] The user exists.\n");
+    } else {
+        fprintf(stdout, "      [+ + +] The user does not exists.\n");   
+    }
+}
+
 void* connection_handler(void* socket_desc) {
     int new_socket = (*(int*) socket_desc);
-    char* ack_message = "OK";
+    // char* ack_message = "OK";
     char buffer_json_msg[BUFFER_DIM];
-    // char flag_buffer[BUFFER_FLAG_DIM];
 
     memset(&buffer_json_msg, 0, sizeof(buffer_json_msg));
-    // memset(&flag_buffer, 0, sizeof(flag_buffer));
-    
     bool stop = false;
     while(!stop) {
-        // printf("\n    [+ +] Server's thread is now waiting.\n");
-
         read(new_socket, buffer_json_msg, BUFFER_DIM);
         buffer_json_msg[BUFFER_DIM - 1] = '\0';
 
         struct json_object* parsed_json = json_tokener_parse(buffer_json_msg);
         struct json_object* flag;
         json_object_object_get_ex(parsed_json, "flag", &flag);
-        // fprintf(stdout, "  FLAG: %s\n", json_object_get_string(flag));
 
         const char* myflag = json_object_get_string(flag);
         if (strcmp(myflag, "LOGIN") == 0) {
-            fprintf(stdout, "      [+ + +] Client has requested to login.\n");
-
-            struct json_object* email;
-            struct json_object* pass;
-
-            json_object_object_get_ex(parsed_json, "email", &email);
-            json_object_object_get_ex(parsed_json, "password", &pass);
-
-            fprintf(stdout, "  EMAIL: %s\n", json_object_get_string(email));
-            fprintf(stdout, "  PASSWORD: %s\n", json_object_get_string(pass));
+            manage_login(parsed_json);
+        } else if (strcmp(myflag, "STOP_CONNECTION") == 0) {
+            stop = true;
         }
-/*
-        if (strcmp(flag_buffer, "LOGIN") == 0) {
-            sleep(1);
-            write(new_socket, ack_message, strlen(ack_message));
-            printf("      [+ + +] OK sent to client.\n");
-
-            // read(new_socket, buffer_msg, BUFFER_DIM);
-            // printf("      [+ + +] READ: %s\n", buffer_msg);
-        } else if (strcmp(flag_buffer, "STOP_C") == 0) { stop = true; }
-*/ 
-        stop = true;
     }
 
     printf("\n[+] Terminating connection with client: closing socket.\n");
@@ -115,29 +112,44 @@ MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
     return connection;
 }
 
-MYSQL_RES* make_query_get_result(MYSQL* connection, char* query) {
+void make_query_print_result(MYSQL* connection, char query[]) {
+    pthread_mutex_lock(&lock);
 	if (mysql_query(connection, query)) {
 		fprintf(stderr, "%s\n", mysql_error(connection));
-		exit(1);
+		return;
 	}
-	MYSQL_RES* result = mysql_use_result(connection);
-    return result;
-}
 
-void make_query_print_result(MYSQL* connection, char* query) {
     MYSQL_ROW row;
-    int step = 0;
-	if (mysql_query(connection, query)) {
-		fprintf(stderr, "%s\n", mysql_error(connection));
-		exit(1);
-	}
-    
 	MYSQL_RES* result = mysql_use_result(connection);
 	while ((row = mysql_fetch_row(result)) != NULL) {
-		++step;
-        fprintf(stdout, "%d. ['%s']\n", step, row[0]);
+        fprintf(stdout, "RESULT: '%s'\n", row[0]);
     }
 	mysql_free_result(result);
+    pthread_mutex_unlock(&lock);
+}
+
+bool exists(MYSQL* connection, char query[]) {
+    pthread_mutex_lock(&lock);
+	if (mysql_query(connection, query)) {
+		fprintf(stderr, "%s\n", mysql_error(connection));
+		return false;
+	}
+
+	MYSQL_RES* result = mysql_store_result(connection);
+    if (result == NULL) return false;
+    
+    int num_rows = mysql_num_rows(result);
+    if (num_rows != 1) {
+        mysql_free_result(result);
+        return false;
+    }
+
+    MYSQL_ROW row = mysql_fetch_row(result);
+    int count = atoi(row[0]);
+	mysql_free_result(result);
+    pthread_mutex_unlock(&lock);
+
+    return (count > 0);
 }
 
 // ------------------------------ MAIN  ------------------------------ //
@@ -146,11 +158,7 @@ int main(int argc, char** argv) {
 
     server_t server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10);
     launch(&server);
-    
-    // MYSQL_ROW row;
-    // char* query = "select * from users";
-    // make_query_print_result(connection, query);
-    
+
 	mysql_close(connection); // DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
     pthread_mutex_destroy(&lock);
 
