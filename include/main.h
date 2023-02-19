@@ -14,10 +14,11 @@ char* database = "history4fun"; /* Remeber to change this value. */
 
 // MYSQL RELATED FUNCTIONS
 MYSQL* init_mysql_connection(MYSQL* connection, char* password);  // RETURNS THE CONNECTION INSTANCE
-void make_query_print_result(MYSQL* connection, char query[]);
 bool exists(MYSQL* connection, char query[]);
+void make_query_send_json(int new_socket, MYSQL* connection, char query[]);
+void send_generated_json(int new_socket, MYSQL_RES* result);
 
 // UTILITY FUNCTIONS
-void manage_login(struct json_object* parsed_json);
+void manage_login(int new_socket, struct json_object* parsed_json);
 
 #endif /* MAIN_H */
