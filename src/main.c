@@ -34,11 +34,13 @@ void manage_login(int new_socket, struct json_object* parsed_json) {
 
     snprintf(query, sizeof(query), "SELECT * FROM users WHERE email='%s' AND password='%s'", email, pass);
     if (exists(connection, query)) {
-        fprintf(stdout, "      [+ + +] The user exists.\n");
-        // send data to client + flag SUCCESS
+        /*
+            * send data to client + flag SUCCESS
+        */
         make_query_send_json(new_socket, connection, query);
+        fprintf(stdout, "      [+ + +] The user exists, json data sent to client.\n");
     } else {
-        fprintf(stdout, "      [+ + +] The user does not exists.\n");   
+        fprintf(stdout, "      [+ + +] The user does not exists.\n");
         // send data to client (all empty) + flag ERROR
     }
 }
@@ -113,6 +115,22 @@ MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
     return connection;
 }
 
+void make_query_send_json(int new_socket, MYSQL* connection, char query[]) {
+    pthread_mutex_lock(&lock);
+    if (mysql_query(connection, query)) {
+		fprintf(stderr, "%s\n", mysql_error(connection));
+		return;
+	}
+
+	MYSQL_RES* result = mysql_store_result(connection);
+    if (result == NULL) {
+        fprintf(stderr, "make_query_send_json() failed.\n");
+        return;
+    }
+    send_generated_json(new_socket, result);
+    pthread_mutex_unlock(&lock);
+}
+
 void send_generated_json(int new_socket, MYSQL_RES* result) {
     MYSQL_ROW row;
     int num_fields = mysql_num_fields(result);
@@ -131,26 +149,9 @@ void send_generated_json(int new_socket, MYSQL_RES* result) {
     const char* json_str = json_object_to_json_string(jobj);
     if (write(new_socket, json_str, strlen(json_str)) < 0) {
         perror("      [- - -] Failed to send json to the client.\n");
-        return;
+        exit(1);
     }
-    fprintf(stdout, "%s", json_str);
     json_object_put(jobj);
-}
-
-void make_query_send_json(int new_socket, MYSQL* connection, char query[]) {
-    pthread_mutex_lock(&lock);
-    if (mysql_query(connection, query)) {
-		fprintf(stderr, "%s\n", mysql_error(connection));
-		return;
-	}
-
-	MYSQL_RES* result = mysql_store_result(connection);
-    if (result == NULL) {
-        fprintf(stderr, "make_query_send_json() failed.\n");
-        return;
-    }
-    send_generated_json(new_socket, result);
-    pthread_mutex_unlock(&lock);
 }
 
 bool exists(MYSQL* connection, char query[]) {
