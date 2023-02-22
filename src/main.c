@@ -24,7 +24,7 @@ void manage_login(int new_socket, struct json_object* parsed_json) {
     struct json_object* json_email;
     struct json_object* json_pass;
     fprintf(stdout, "      [+ + +] Client has requested to login.\n");
-            
+
     json_object_object_get_ex(parsed_json, "email", &json_email);
     json_object_object_get_ex(parsed_json, "password", &json_pass);
 
@@ -78,7 +78,7 @@ void* connection_handler(void* socket_desc) {
 void launch(server_t* server) {
     connection = init_mysql_connection(connection, util_read_password_from_file());
     int i = 0;
-    
+
     printf("[+] MySQL connection successful.\n");
     printf("[+] Server is now waiting for connections.\n");
 
