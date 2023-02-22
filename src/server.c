@@ -34,7 +34,7 @@ server_t create_server(int address_family, int service, int protocol, u_long int
         perror("[-] Socket bind failed.");
         exit(1);
     }
-    puts("[+] Socket bin successful.");
+    puts("[+] Socket bind successful.");
 
     if (listen(server.socket, server.backlog) < 0) {
         perror("[-] Failed to start listening.\n");

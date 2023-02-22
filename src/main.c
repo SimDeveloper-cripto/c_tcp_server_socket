@@ -41,7 +41,9 @@ void manage_login(int new_socket, struct json_object* parsed_json) {
         fprintf(stdout, "      [+ + +] The user exists, json data sent to client.\n");
     } else {
         fprintf(stdout, "      [+ + +] The user does not exists.\n");
-        // send data to client (all empty) + flag ERROR
+        /*
+            * send empty json data to client + flag FAILURE
+        */
     }
 }
 
