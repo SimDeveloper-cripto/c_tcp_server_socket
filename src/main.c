@@ -34,16 +34,12 @@ void manage_login(int new_socket, struct json_object* parsed_json) {
 
     snprintf(query, sizeof(query), "SELECT * FROM users WHERE email='%s' AND password='%s'", email, pass);
     if (exists(connection, query)) {
-        /*
-            * send data to client + flag SUCCESS
-        */
-        make_query_send_json(new_socket, connection, query);
-        fprintf(stdout, "      [+ + +] The user exists, json data sent to client.\n");
+        make_query_send_json(new_socket, connection, query, "SUCCESS");
+        fprintf(stdout, "      [+ + +] LOGIN SUCCESSFUL.\n");
     } else {
-        fprintf(stdout, "      [+ + +] The user does not exists.\n");
-        /*
-            * send empty json data to client + flag FAILURE
-        */
+        // If the user does not exists we send to the client a json with a flag "FAILURE" and an empty body.
+        send_failure_json(new_socket);
+        fprintf(stdout, "      [+ + +] THE USER CAN'T LOGIN.\n");
     }
 }
 
@@ -117,7 +113,7 @@ MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
     return connection;
 }
 
-void make_query_send_json(int new_socket, MYSQL* connection, char query[]) {
+void make_query_send_json(int new_socket, MYSQL* connection, char query[], char* flag) {
     pthread_mutex_lock(&lock);
     if (mysql_query(connection, query)) {
 		fprintf(stderr, "%s\n", mysql_error(connection));
@@ -129,14 +125,14 @@ void make_query_send_json(int new_socket, MYSQL* connection, char query[]) {
         fprintf(stderr, "make_query_send_json() failed.\n");
         return;
     }
-    send_generated_json(new_socket, result);
+    send_generated_json(new_socket, result, flag);
     pthread_mutex_unlock(&lock);
 }
 
-void send_generated_json(int new_socket, MYSQL_RES* result) {
+void send_generated_json(int new_socket, MYSQL_RES* result, char* flag) {
     MYSQL_ROW row;
     int num_fields = mysql_num_fields(result);
-    json_object* jobj = json_object_new_array(); 
+    json_object* jobj = json_object_new_array();
 
     while ((row = mysql_fetch_row(result))) {
         json_object* jrow = json_object_new_object();
@@ -148,12 +144,38 @@ void send_generated_json(int new_socket, MYSQL_RES* result) {
         json_object_array_add(jobj, jrow);
     }
 
-    const char* json_str = json_object_to_json_string(jobj);
+    json_object* jwrapper = json_object_new_object();
+    json_object* jflag = json_object_new_string(flag);
+    json_object_object_add(jwrapper, "flag", jflag);
+    json_object_object_add(jwrapper, "retrieved_data", jobj);
+
+    // const char* json_str = json_object_to_json_string(jobj);
+    const char* json_str = json_object_to_json_string(jwrapper);
     if (write(new_socket, json_str, strlen(json_str)) < 0) {
         perror("      [- - -] Failed to send json to the client.\n");
         exit(1);
     }
-    json_object_put(jobj);
+    // json_object_put(jobj);
+    json_object_put(jwrapper);
+}
+
+void send_failure_json(int new_socket) {
+    json_object* root = json_object_new_object();
+    json_object_object_add(root, "flag", json_object_new_string("FAILURE"));
+
+    json_object* array = json_object_new_array();
+    
+    json_object* obj = json_object_new_object();
+    json_object_array_add(array, obj);
+
+    json_object_object_add(root, "retrieved_data", array);
+    const char *json_str = json_object_to_json_string(root);
+
+    if (write(new_socket, json_str, strlen(json_str)) < 0) {
+        perror("      [- - -] Failed to send json to the client.\n");
+        exit(1);
+    }
+    json_object_put(root);
 }
 
 bool exists(MYSQL* connection, char query[]) {
