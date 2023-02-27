@@ -23,7 +23,7 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 void manage_login(int new_socket, struct json_object* parsed_json) {
     struct json_object* json_email;
     struct json_object* json_pass;
-    fprintf(stdout, "      [+ + +] Client has requested to login.\n");
+    // fprintf(stdout, "      [+ + +] Client has requested to login.\n");
 
     json_object_object_get_ex(parsed_json, "email", &json_email);
     json_object_object_get_ex(parsed_json, "password", &json_pass);
@@ -35,11 +35,11 @@ void manage_login(int new_socket, struct json_object* parsed_json) {
     snprintf(query, sizeof(query), "SELECT * FROM users WHERE email='%s' AND password='%s'", email, pass);
     if (exists(connection, query)) {
         make_query_send_json(new_socket, connection, query, "SUCCESS");
-        fprintf(stdout, "      [+ + +] LOGIN SUCCESSFULL.\n");
+        // fprintf(stdout, "      [+ + +] LOGIN SUCCESSFULL.\n");
     } else {
-        // If the user does not exists we send to the client a json with a flag "FAILURE" and an empty body.
+        /* If the user does not exists we send to the client a json with a flag "FAILURE" and an empty body. */
         send_failure_json(new_socket);
-        fprintf(stdout, "      [+ + +] THE USER CAN'T LOGIN.\n");
+        // fprintf(stdout, "      [+ + +] THE USER CAN'T LOGIN.\n");
     }
 }
 
@@ -61,6 +61,10 @@ void* connection_handler(void* socket_desc) {
         const char* myflag = json_object_get_string(flag);
         if (strcmp(myflag, "LOGIN") == 0) {
             manage_login(new_socket, parsed_json);
+        } else if (strcmp(myflag, "REGISTER") == 0) {
+            
+        }  else if (strcmp(myflag, "FORGET_PASSWORD") == 0) {
+            
         } else if (strcmp(myflag, "STOP_CONNECTION") == 0) {
             stop = true;
         }
@@ -173,7 +177,7 @@ void send_failure_json(int new_socket) {
 
     if (write(new_socket, json_str, strlen(json_str)) < 0) {
         perror("      [- - -] Failed to send json to the client.\n");
-        exit(1);
+        exit(1); // This generates ": Broken Pipe"
     }
     json_object_put(root);
 }
