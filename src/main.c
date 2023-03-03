@@ -23,7 +23,6 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 void manage_login(int new_socket, struct json_object* parsed_json) {
     struct json_object* json_email;
     struct json_object* json_pass;
-    // fprintf(stdout, "      [+ + +] Client has requested to login.\n");
 
     json_object_object_get_ex(parsed_json, "email", &json_email);
     json_object_object_get_ex(parsed_json, "password", &json_pass);
@@ -35,11 +34,9 @@ void manage_login(int new_socket, struct json_object* parsed_json) {
     snprintf(query, sizeof(query), "SELECT * FROM users WHERE email='%s' AND password='%s'", email, pass);
     if (exists(connection, query)) {
         make_query_send_json(new_socket, connection, query, "SUCCESS");
-        // fprintf(stdout, "      [+ + +] LOGIN SUCCESSFULL.\n");
     } else {
         /* If the user does not exists we send to the client a json with a flag "FAILURE" and an empty body. */
         send_failure_json(new_socket);
-        // fprintf(stdout, "      [+ + +] THE USER CAN'T LOGIN.\n");
     }
 }
 
