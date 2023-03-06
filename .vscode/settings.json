@@ -5,6 +5,7 @@
         "server.h": "c",
         "utils.h": "c",
         "string.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "stdbool.h": "c"
     }
 }

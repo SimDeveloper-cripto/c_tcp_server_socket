@@ -1,6 +1,6 @@
-#include "../include/server.h"
 #include "../include/list.h"
 #include "../include/main.h"
+#include "../include/server.h"
 
 #define UTILS_H_IMPLEMENTATION
 #include "../include/utils.h"
@@ -40,6 +40,10 @@ void manage_login(int new_socket, struct json_object* parsed_json) {
     }
 }
 
+void manage_register(int new_socket, struct json_object* parsed_json) {
+    fprintf(stdout, "L'utente vuole registarsi!");
+}
+
 void* connection_handler(void* socket_desc) {
     int new_socket = (*(int*) socket_desc);
     // char* ack_message = "OK";
@@ -49,7 +53,7 @@ void* connection_handler(void* socket_desc) {
     bool stop = false;
     while(!stop) {
         read(new_socket, buffer_json_msg, BUFFER_DIM);
-        buffer_json_msg[BUFFER_DIM - 1] = '\0';
+        buffer_json_msg[BUFFER_DIM] = '\0';
 
         struct json_object* parsed_json = json_tokener_parse(buffer_json_msg);
         struct json_object* flag;
@@ -59,8 +63,9 @@ void* connection_handler(void* socket_desc) {
         if (strcmp(myflag, "LOGIN") == 0) {
             manage_login(new_socket, parsed_json);
         } else if (strcmp(myflag, "REGISTER") == 0) {
-            
-        }  else if (strcmp(myflag, "FORGET_PASSWORD") == 0) {
+            // TODO: CONTROLLARE CHE IL JSON SIA CORRETTO E CREARE UNA FUNZIONE PER MANAGE
+            manage_register(new_socket, parsed_json);
+        } else if (strcmp(myflag, "FORGET_PASSWORD") == 0) {
             
         } else if (strcmp(myflag, "STOP_CONNECTION") == 0) {
             stop = true;
@@ -114,6 +119,8 @@ MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
     return connection;
 }
 
+// TODO: QUESTE FUNZIONI CON MOLTA PROBABILITA' ANDRANNO MODIFICATE
+// TODO: NELLA HOME, L'UTENTE DEVE APPARIRE ANCHE CON IL SUO USER_ID
 void make_query_send_json(int new_socket, MYSQL* connection, char query[], char* flag) {
     pthread_mutex_lock(&lock);
     if (mysql_query(connection, query)) {
