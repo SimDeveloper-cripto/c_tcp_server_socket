@@ -13,7 +13,7 @@
 #include <stdbool.h>
 #include <json-c/json.h>
 
-#define BUFFER_DIM 2048
+#define BUFFER_DIM 512
 
 static MYSQL* connection;
 static pthread_t thread_pool[20];
@@ -35,26 +35,75 @@ void manage_login(int new_socket, struct json_object* parsed_json) {
     if (exists(connection, query)) {
         make_query_send_json(new_socket, connection, query, "SUCCESS");
     } else {
-        /* If the user does not exists we send to the client a json with a flag "FAILURE" and an empty body. */
         send_failure_json(new_socket);
     }
+    return;
 }
 
 void manage_register(int new_socket, struct json_object* parsed_json) {
-    fprintf(stdout, "L'utente vuole registarsi!");
+    struct json_object* json_user_id;
+    struct json_object* json_name;
+    struct json_object* json_surname;
+    struct json_object* json_email;
+    struct json_object* json_password;
+    struct json_object* json_age;
+    struct json_object* json_phone;
+    struct json_object* json_expert;
+
+    json_object_object_get_ex(parsed_json, "user_id", &json_user_id);
+    json_object_object_get_ex(parsed_json, "name", &json_name);
+    json_object_object_get_ex(parsed_json, "surname", &json_surname);
+    json_object_object_get_ex(parsed_json, "email", &json_email);
+    json_object_object_get_ex(parsed_json, "password", &json_password);
+    json_object_object_get_ex(parsed_json, "age", &json_age);
+    json_object_object_get_ex(parsed_json, "phone_number", &json_phone);
+    json_object_object_get_ex(parsed_json, "expert", &json_expert);
+
+    const char* telefono = json_object_get_string(json_phone);
+    const char* email    = json_object_get_string(json_email);
+
+    char query[256];
+    snprintf(query, sizeof(query), "SELECT * FROM users WHERE email='%s' OR phone_number='%s'", email, telefono);
+    if (!exists(connection, query)) {
+        const char* u_id        = json_object_get_string(json_user_id);
+        const char* name        = json_object_get_string(json_name);
+        const char* surname     = json_object_get_string(json_surname);
+        const char* pass        = json_object_get_string(json_password);
+        const int32_t eta      = json_object_get_int(json_age);
+        const int32_t expert   = json_object_get_int(json_expert);
+
+        // insert_into_users(connection, u_id, name, surname, email, pass, eta, telefono, expert);
+
+        pthread_mutex_lock(&lock);
+        char query[512];
+        snprintf(query, sizeof(query), "INSERT INTO users (user_id, name, surname, email, password, age, phone_number, expert) VALUES ('%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d')", 
+            u_id, name, surname, email, pass, eta, telefono, expert);
+        
+        if (mysql_real_query(connection, query, strlen(query))) {
+            printf("[ERROR] INSERT failed: %s\n", mysql_error(connection));
+            exit(1);
+        }
+        pthread_mutex_unlock(&lock);
+        
+        fprintf(stdout, "Utente inserito nel database!\n");
+        // TODO: MANDARE JSON SUCCESS CON IL CORPO CORRETTO AL CLIENT
+    } else {
+        send_failure_json(new_socket);
+    }
+    return;
 }
 
 void* connection_handler(void* socket_desc) {
     int new_socket = (*(int*) socket_desc);
-    // char* ack_message = "OK";
     char buffer_json_msg[BUFFER_DIM];
 
     memset(&buffer_json_msg, 0, sizeof(buffer_json_msg));
     bool stop = false;
     while(!stop) {
+        buffer_json_msg[0] = '\0';
         read(new_socket, buffer_json_msg, BUFFER_DIM);
-        buffer_json_msg[BUFFER_DIM] = '\0';
-
+        
+        buffer_json_msg[BUFFER_DIM - 1] = '\0';
         struct json_object* parsed_json = json_tokener_parse(buffer_json_msg);
         struct json_object* flag;
         json_object_object_get_ex(parsed_json, "flag", &flag);
@@ -63,10 +112,7 @@ void* connection_handler(void* socket_desc) {
         if (strcmp(myflag, "LOGIN") == 0) {
             manage_login(new_socket, parsed_json);
         } else if (strcmp(myflag, "REGISTER") == 0) {
-            // TODO: CONTROLLARE CHE IL JSON SIA CORRETTO E CREARE UNA FUNZIONE PER MANAGE
             manage_register(new_socket, parsed_json);
-        } else if (strcmp(myflag, "FORGET_PASSWORD") == 0) {
-            
         } else if (strcmp(myflag, "STOP_CONNECTION") == 0) {
             stop = true;
         }
@@ -121,6 +167,12 @@ MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
 
 // TODO: QUESTE FUNZIONI CON MOLTA PROBABILITA' ANDRANNO MODIFICATE
 // TODO: NELLA HOME, L'UTENTE DEVE APPARIRE ANCHE CON IL SUO USER_ID
+
+void insert_into_users(MYSQL* connection, const char* u_id, const char* name, const char* surname, 
+    const char* email, const char* pass, const int* eta, const char* telefono, const int* expert) {
+    // TODO: COSA FARE DI QUESTA FUNZIONE?
+}
+
 void make_query_send_json(int new_socket, MYSQL* connection, char query[], char* flag) {
     pthread_mutex_lock(&lock);
     if (mysql_query(connection, query)) {
@@ -181,7 +233,7 @@ void send_failure_json(int new_socket) {
 
     if (write(new_socket, json_str, strlen(json_str)) < 0) {
         perror("      [- - -] Failed to send json to the client.\n");
-        exit(1); // This generates ": Broken Pipe"
+        exit(1);
     }
     json_object_put(root);
 }
