@@ -18,8 +18,6 @@ bool exists(MYSQL* connection, char query[]);
 void make_query_send_json(int new_socket, MYSQL* connection, char query[], char* flag);
 void send_generated_json(int new_socket, MYSQL_RES* result, char* flag);
 void send_failure_json(int new_socket);
-void insert_into_users(MYSQL* connection, const char* u_id, const char* name, const char* surname, 
-    const char* email, const char* pass, const int* eta, const char* telefono, const int* expert);
 
 // UTILITY FUNCTIONS
 void manage_login(int new_socket, struct json_object* parsed_json);

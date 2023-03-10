@@ -29,8 +29,8 @@ void manage_login(int new_socket, struct json_object* parsed_json) {
 
     const char* email = json_object_get_string(json_email);
     const char* pass = json_object_get_string(json_pass);
-    char query[256];
 
+    char query[256];
     snprintf(query, sizeof(query), "SELECT * FROM users WHERE email='%s' AND password='%s'", email, pass);
     if (exists(connection, query)) {
         make_query_send_json(new_socket, connection, query, "SUCCESS");
@@ -69,24 +69,28 @@ void manage_register(int new_socket, struct json_object* parsed_json) {
         const char* name        = json_object_get_string(json_name);
         const char* surname     = json_object_get_string(json_surname);
         const char* pass        = json_object_get_string(json_password);
-        const int32_t eta      = json_object_get_int(json_age);
-        const int32_t expert   = json_object_get_int(json_expert);
+        const int32_t eta       = json_object_get_int(json_age);
+        const int32_t expert    = json_object_get_int(json_expert);
 
-        // insert_into_users(connection, u_id, name, surname, email, pass, eta, telefono, expert);
-
-        pthread_mutex_lock(&lock);
         char query[512];
         snprintf(query, sizeof(query), "INSERT INTO users (user_id, name, surname, email, password, age, phone_number, expert) VALUES ('%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d')", 
             u_id, name, surname, email, pass, eta, telefono, expert);
         
+        pthread_mutex_lock(&lock);
         if (mysql_real_query(connection, query, strlen(query))) {
             printf("[ERROR] INSERT failed: %s\n", mysql_error(connection));
             exit(1);
         }
         pthread_mutex_unlock(&lock);
-        
-        fprintf(stdout, "Utente inserito nel database!\n");
-        // TODO: MANDARE JSON SUCCESS CON IL CORPO CORRETTO AL CLIENT
+
+        /* TODO
+            DAL LOGIN CREIAMO L'UTENTE CON OGNI SUO SINGOLO DATO E LO PASSIAMO INTERO ALLA HOME ACTIVITY.
+            << DAL REGISTER ALLA HOME ACTIVITY FACCIAMO LA STESSA COSA >>
+            "SECONDO ME VA BENE AVERE OGNI SINGOLO DATO DELL'UTENTE, ANCHE SE NEL PROFILO NE MOSTRIAMO SOLO UNA PICCOLA PARTE."
+        */
+        char query2[312];
+        snprintf(query, sizeof(query), "SELECT * FROM users WHERE user_id='%s'", u_id);
+        make_query_send_json(new_socket, connection, query2, "SUCCESS");
     } else {
         send_failure_json(new_socket);
     }
@@ -103,7 +107,7 @@ void* connection_handler(void* socket_desc) {
         buffer_json_msg[0] = '\0';
         read(new_socket, buffer_json_msg, BUFFER_DIM);
         
-        buffer_json_msg[BUFFER_DIM - 1] = '\0';
+        buffer_json_msg[BUFFER_DIM] = '\0';
         struct json_object* parsed_json = json_tokener_parse(buffer_json_msg);
         struct json_object* flag;
         json_object_object_get_ex(parsed_json, "flag", &flag);
@@ -163,14 +167,6 @@ MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
             exit(1);
     }
     return connection;
-}
-
-// TODO: QUESTE FUNZIONI CON MOLTA PROBABILITA' ANDRANNO MODIFICATE
-// TODO: NELLA HOME, L'UTENTE DEVE APPARIRE ANCHE CON IL SUO USER_ID
-
-void insert_into_users(MYSQL* connection, const char* u_id, const char* name, const char* surname, 
-    const char* email, const char* pass, const int* eta, const char* telefono, const int* expert) {
-    // TODO: COSA FARE DI QUESTA FUNZIONE?
 }
 
 void make_query_send_json(int new_socket, MYSQL* connection, char query[], char* flag) {
