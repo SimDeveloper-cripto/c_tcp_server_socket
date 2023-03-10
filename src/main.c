@@ -89,7 +89,8 @@ void manage_register(int new_socket, struct json_object* parsed_json) {
             "SECONDO ME VA BENE AVERE OGNI SINGOLO DATO DELL'UTENTE, ANCHE SE NEL PROFILO NE MOSTRIAMO SOLO UNA PICCOLA PARTE."
         */
         char query2[256];
-        snprintf(query, sizeof(query), "SELECT * FROM users WHERE user_id='%s'", u_id);
+        snprintf(query2, sizeof(query), "SELECT * FROM users WHERE user_id='%s'", u_id);
+        // sleep(2.5);
         make_query_send_json(new_socket, connection, query2, "SUCCESS");
     } else {
         send_failure_json(new_socket);
