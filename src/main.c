@@ -88,7 +88,7 @@ void manage_register(int new_socket, struct json_object* parsed_json) {
             << DAL REGISTER ALLA HOME ACTIVITY FACCIAMO LA STESSA COSA >>
             "SECONDO ME VA BENE AVERE OGNI SINGOLO DATO DELL'UTENTE, ANCHE SE NEL PROFILO NE MOSTRIAMO SOLO UNA PICCOLA PARTE."
         */
-        char query2[312];
+        char query2[256];
         snprintf(query, sizeof(query), "SELECT * FROM users WHERE user_id='%s'", u_id);
         make_query_send_json(new_socket, connection, query2, "SUCCESS");
     } else {
@@ -173,13 +173,13 @@ void make_query_send_json(int new_socket, MYSQL* connection, char query[], char*
     pthread_mutex_lock(&lock);
     if (mysql_query(connection, query)) {
 		fprintf(stderr, "%s\n", mysql_error(connection));
-		return;
+		exit(1);
 	}
 
 	MYSQL_RES* result = mysql_store_result(connection);
     if (result == NULL) {
         fprintf(stderr, "make_query_send_json() failed.\n");
-        return;
+        exit(1);
     }
     send_generated_json(new_socket, result, flag);
     pthread_mutex_unlock(&lock);
