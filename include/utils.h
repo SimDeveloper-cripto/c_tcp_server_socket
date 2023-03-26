@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #define BUZZ_SIZE 1024
 
@@ -29,6 +30,5 @@ char* util_read_password_from_file() {
 }
 
 // ...
-
 
 #endif /* UTILS_H */

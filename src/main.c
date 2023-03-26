@@ -20,6 +20,52 @@ static pthread_t thread_pool[20];
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 // ------------------------------ SERVER RELATED FUNCTIONS ------------------------------ //
+void send_random_code(int new_socket) {
+    srand(time(NULL));
+    char random_code[6];
+    for (size_t i = 0; i < 5; i++) {
+        int num = rand() % 10;
+        random_code[i] = num + '0';
+    }
+    random_code[5] = '\0';
+
+    json_object *flag = json_object_new_string("SUCCESS");
+    json_object *data_array = json_object_new_array();
+    json_object *data_string = json_object_new_string(random_code);
+    json_object_array_add(data_array, data_string);
+    json_object *retrieved_data = json_object_new_object();
+    json_object_object_add(retrieved_data, "code", data_array);
+    json_object *json = json_object_new_object();
+    json_object_object_add(json, "flag", flag);
+    json_object_object_add(json, "retrieved_data", retrieved_data);
+
+    const char *json_string = json_object_to_json_string(json);
+    if (write(new_socket, json_string, strlen(json_string)) < 0) {
+        perror("      [- - -] Failed to send json to the client.\n");
+        exit(1);
+    }
+    json_object_put(json);
+    return;
+}
+
+void manage_forgot_password(int new_socket, struct json_object* parsed_json) {
+    // 1. EFFETTUARE IL CONTROLLO DI ESISTENZA DELLA MAIL NEL DATABASE
+    struct json_object* json_email;
+    json_object_object_get_ex(parsed_json, "email", &json_email);
+    const char* email = json_object_get_string(json_email);
+
+    char query[256];
+    snprintf(query, sizeof(query), "SELECT * FROM users WHERE email='%s'", email);
+    if (exists(connection, query)) {
+        // 2. SE "SUCCESS", INVIARE IL BODY JSON AL CLIENT CON RELATIVO CODICE DA CONTROLLARE
+        send_random_code(new_socket);
+    } else {
+        // 2. SE "FAILURE" SFRUTTARE LA FUNZIONE APPOSITA
+        send_failure_json(new_socket);
+    }
+    return;
+}
+
 void manage_login(int new_socket, struct json_object* parsed_json) {
     struct json_object* json_email;
     struct json_object* json_pass;
@@ -107,7 +153,7 @@ void* connection_handler(void* socket_desc) {
     while(!stop) {
         buffer_json_msg[0] = '\0';
         read(new_socket, buffer_json_msg, BUFFER_DIM);
-        
+
         buffer_json_msg[BUFFER_DIM] = '\0';
         struct json_object* parsed_json = json_tokener_parse(buffer_json_msg);
         struct json_object* flag;
@@ -118,13 +164,15 @@ void* connection_handler(void* socket_desc) {
             manage_login(new_socket, parsed_json);
         } else if (strcmp(myflag, "REGISTER") == 0) {
             manage_register(new_socket, parsed_json);
+        } else if (strcmp(myflag, "FRGTPASS") == 0) {
+            manage_forgot_password(new_socket, parsed_json);
         } else if (strcmp(myflag, "STOP_CONNECTION") == 0) {
             stop = true;
+            printf("\n[+] Terminating connection with client: closing socket.\n");
+            close(new_socket);
         }
     }
 
-    printf("\n[+] Terminating connection with client: closing socket.\n");
-    close(new_socket);
     return EXIT_SUCCESS;
 }
 
