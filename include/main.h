@@ -18,11 +18,13 @@ bool exists(MYSQL* connection, char query[]);
 void make_query_send_json(int new_socket, MYSQL* connection, char query[], char* flag);
 void send_generated_json(int new_socket, MYSQL_RES* result, char* flag);
 void send_failure_json(int new_socket);
+void send_success_json_empty_body(int new_socket);
 
 // UTILITY FUNCTIONS
 void send_random_code(int new_socket);
 void manage_login(int new_socket, struct json_object* parsed_json);
 void manage_register(int new_socket, struct json_object* parsed_json);
 void manage_forgot_password(int new_socket, struct json_object* parsed_json);
+void manage_alter_password(int new_socket, struct json_object* parsed_json);
 
 #endif /* MAIN_H */

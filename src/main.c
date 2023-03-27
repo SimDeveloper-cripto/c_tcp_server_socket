@@ -48,6 +48,28 @@ void send_random_code(int new_socket) {
     return;
 }
 
+void manage_alter_password(int new_socket, struct json_object* parsed_json) {
+    struct json_object* json_new_pass;
+    struct json_object* json_email;
+
+    json_object_object_get_ex(parsed_json, "new_password", &json_new_pass);
+    json_object_object_get_ex(parsed_json, "email", &json_email);
+
+    const char* new_pass = json_object_get_string(json_new_pass);
+    const char* _email   = json_object_get_string(json_email);
+
+    char query[256];
+    snprintf(query, sizeof(query), "UPDATE users SET password='%s' WHERE email='%s'", new_pass, _email);
+        
+    pthread_mutex_lock(&lock);
+    if (mysql_real_query(connection, query, strlen(query))) {
+        send_failure_json(new_socket);
+    } else {
+        send_success_json_empty_body(new_socket);
+    }
+    pthread_mutex_unlock(&lock);
+}
+
 void manage_forgot_password(int new_socket, struct json_object* parsed_json) {
     // 1. EFFETTUARE IL CONTROLLO DI ESISTENZA DELLA MAIL NEL DATABASE
     struct json_object* json_email;
@@ -129,14 +151,8 @@ void manage_register(int new_socket, struct json_object* parsed_json) {
         }
         pthread_mutex_unlock(&lock);
 
-        /* TODO
-            DAL LOGIN CREIAMO L'UTENTE CON OGNI SUO SINGOLO DATO E LO PASSIAMO INTERO ALLA HOME ACTIVITY.
-            << DAL REGISTER ALLA HOME ACTIVITY FACCIAMO LA STESSA COSA >>
-            "SECONDO ME VA BENE AVERE OGNI SINGOLO DATO DELL'UTENTE, ANCHE SE NEL PROFILO NE MOSTRIAMO SOLO UNA PICCOLA PARTE."
-        */
         char query2[256];
         snprintf(query2, sizeof(query), "SELECT * FROM users WHERE user_id='%s'", u_id);
-        // sleep(2.5);
         make_query_send_json(new_socket, connection, query2, "SUCCESS");
     } else {
         send_failure_json(new_socket);
@@ -166,6 +182,8 @@ void* connection_handler(void* socket_desc) {
             manage_register(new_socket, parsed_json);
         } else if (strcmp(myflag, "FRGTPASS") == 0) {
             manage_forgot_password(new_socket, parsed_json);
+        } else if (strcmp(myflag, "NEW_PASSWORD") == 0) {
+            manage_alter_password(new_socket, parsed_json);
         } else if (strcmp(myflag, "STOP_CONNECTION") == 0) {
             stop = true;
             printf("\n[+] Terminating connection with client: closing socket.\n");
@@ -254,19 +272,36 @@ void send_generated_json(int new_socket, MYSQL_RES* result, char* flag) {
     json_object_object_add(jwrapper, "flag", jflag);
     json_object_object_add(jwrapper, "retrieved_data", jobj);
 
-    // const char* json_str = json_object_to_json_string(jobj);
     const char* json_str = json_object_to_json_string(jwrapper);
     if (write(new_socket, json_str, strlen(json_str)) < 0) {
         perror("      [- - -] Failed to send json to the client.\n");
         exit(1);
     }
-    // json_object_put(jobj);
     json_object_put(jwrapper);
 }
 
 void send_failure_json(int new_socket) {
     json_object* root = json_object_new_object();
     json_object_object_add(root, "flag", json_object_new_string("FAILURE"));
+
+    json_object* array = json_object_new_array();
+    
+    json_object* obj = json_object_new_object();
+    json_object_array_add(array, obj);
+
+    json_object_object_add(root, "retrieved_data", array);
+    const char *json_str = json_object_to_json_string(root);
+
+    if (write(new_socket, json_str, strlen(json_str)) < 0) {
+        perror("      [- - -] Failed to send json to the client.\n");
+        exit(1);
+    }
+    json_object_put(root);
+}
+
+void send_success_json_empty_body(int new_socket) {
+    json_object* root = json_object_new_object();
+    json_object_object_add(root, "flag", json_object_new_string("SUCCESS"));
 
     json_object* array = json_object_new_array();
     
