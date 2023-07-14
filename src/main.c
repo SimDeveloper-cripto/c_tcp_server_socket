@@ -19,7 +19,7 @@ static MYSQL* connection;
 static pthread_t thread_pool[20];
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-// ------------------------------ SERVER RELATED FUNCTIONS ------------------------------ //
+// ------------------------------- SERVER RELATED FUNCTIONS ------------------------------- //
 void send_random_code(int new_socket) {
     srand(time(NULL));
     char random_code[6];
