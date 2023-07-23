@@ -13,6 +13,7 @@
 #include <json-c/json.h>
 
 #define BUFFER_DIM 512
+#define MAX_CLIENTS 10
 
 static MYSQL* connection;
 static pthread_t thread_pool[20];
@@ -234,26 +235,28 @@ void* connection_handler(void* socket_desc) {
     bool stop = false;
     while(!stop) {
         buffer_json_msg[0] = '\0';
-        read(new_socket, buffer_json_msg, BUFFER_DIM);
+        int bytes_received = read(new_socket, buffer_json_msg, BUFFER_DIM);
 
         buffer_json_msg[BUFFER_DIM] = '\0';
         struct json_object* parsed_json = json_tokener_parse(buffer_json_msg);
         struct json_object* flag;
         json_object_object_get_ex(parsed_json, "flag", &flag);
-
         const char* myflag = json_object_get_string(flag);
-        if (strcmp(myflag, "LOGIN") == 0) {
-            manage_login(new_socket, parsed_json);
-        } else if (strcmp(myflag, "REGISTER") == 0) {
-            manage_register(new_socket, parsed_json);
-        } else if (strcmp(myflag, "FRGTPASS") == 0) {
-            manage_forgot_password(new_socket, parsed_json);
-        } else if (strcmp(myflag, "NEW_PASSWORD") == 0) {
-            manage_alter_password(new_socket, parsed_json);
-        } else if (strcmp(myflag, "STOP_CONNECTION") == 0) {
+
+        if ((bytes_received <= 0) || (strcmp(myflag, "STOP_CONNECTION") == 0)) {
+            printf("\n[+] Client interrupted: client socket has been closed.\n");
             stop = true;
-            printf("\n[+] Terminating connection with client: closing socket.\n");
             close(new_socket);
+        } else {
+            if (strcmp(myflag, "LOGIN") == 0) {
+                manage_login(new_socket, parsed_json);
+            } else if (strcmp(myflag, "REGISTER") == 0) {
+                manage_register(new_socket, parsed_json);
+            } else if (strcmp(myflag, "FRGTPASS") == 0) {
+                manage_forgot_password(new_socket, parsed_json);
+            } else if (strcmp(myflag, "NEW_PASSWORD") == 0) {
+                manage_alter_password(new_socket, parsed_json);
+            }
         }
     }
 
@@ -279,17 +282,19 @@ void launch(server_t* server) {
         printf("\n[+] Client connection accepted.\n");
         if (pthread_create(&thread_pool[i++], NULL, connection_handler, (void*) &new_socket) < 0) {
             perror("[-] Could not create thread.");
+            close(new_socket);
             exit(1);
         }
 		printf("    [+ +] Thread created for client requests.\n");
         
-        if (i >= 10) {
+        if (i >= MAX_CLIENTS) {
             i = 0;
-            while (i < 10)
+            while (i < MAX_CLIENTS)
                 pthread_join(thread_pool[i++], NULL);
             i = 0;
         }
     }
+    close(server->socket);
 }
 
 // ------------------------------ MYSQL RELATED FUNCTIONS ------------------------------ //
