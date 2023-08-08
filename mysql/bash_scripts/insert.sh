@@ -3,6 +3,7 @@
 # WE HAVE A TABLE IN OUR DATABASE WHERE WE INSERT DESCRIPTIONS FOR EVERY ARTIFACT OUR MUSEUM SHOWS TO THE PUBLIC
 # EVERY DESCRIPTION AS A DIFFERENT LENGTH DEPENDING ON THE KIND OF USER
 # SINCE MYSQL IS A PAIN WHEN IT COMES TO INSERT LONG TEXT (ESCAPING INCLUDED), I WROTE THIS SIMPLE SCRIPT
+# MODIFY THIS SCRIPT AS YOU LIKE
 
 # INSERT HERE YOUR DATA (WHEN THE PROGRAM RUNS, YOU WILL BE ASKED TO INSERT YOUR PASSWORD TO GET ACCESS)
 DB_USER=""
@@ -11,7 +12,7 @@ DB_NAME=""
 TABLE_NAME=""
 COLUMN_NAME=""
 
-# ARTIFACT CODE (IT IS A PRIMARY KEY)
+# ARTIFACT ID_CODE (IT IS A PRIMARY KEY)
 id=""
 
 # DESCRPTION 1: NORMAL USER
@@ -31,7 +32,7 @@ escaped_valore1=$(echo "$n_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "
 escaped_valore2=$(echo "$y_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g")
 escaped_valore3=$(echo "$e_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g")
 
-# THIS IS AN EXAMPLE, FEEL FREE TO CHANGE AS YOU PREFER
+# INSERT INTO A TABLE
 INSERT_QUERY="INSERT INTO $TABLE_NAME (artifact_id, n_description, y_description, e_description, area)
     VALUES ('$id', '$escaped_valore1', '$escaped_valore2', '$escaped_valore3', '$area');"
 

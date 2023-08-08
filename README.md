@@ -4,7 +4,7 @@ This is an implementation of a TCP server socket, all written in C language. <br
 To breefly explain what the server does, basically it handles connections from clients that need to be interfaced with a DBMS, in this case MySQL. <br />
     1. The client sends to the server its data so that the server can perform queries. <br />
     2. The server sends back to the client the results he retrieved.
-<br /> The motivation that led to the development of this project was the need to create a client application for museum users.
+<br /> The motivation that led to the development of this project was the need to create a client-server application for museum users.
 <br /> The development process of this project took place in a Linux environment, Ubuntu20.04 to be specific.
 
 ## MySQL get started tutorial on Ubuntu20.04
@@ -33,6 +33,7 @@ $ sudo /etc/init.d/mysql stop
 /include contains all header files. <br />
 /src contains all source files. <br />
 /bin contains the executable file. <br />
+/mysql contains bash scripts used to interact with the DBMS. <br />
 
 ## Test the server
 
