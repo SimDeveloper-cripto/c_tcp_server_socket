@@ -27,14 +27,14 @@ e_description=""
 area=""
 
 # HERE ESCAPE CHARACTERS THAT MYSQL DOES NOT LIKE, YOU CAN EXTEND IT
-escaped_valore1=$(echo "$n_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g")    
+escaped_valore1=$(echo "$n_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g")
 escaped_valore2=$(echo "$y_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g")
 escaped_valore3=$(echo "$e_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g")
 
-# THIS IS AN EXAMPLE, FEEL FREE TO CHANGE AS YOU PREFER 
+# THIS IS AN EXAMPLE, FEEL FREE TO CHANGE AS YOU PREFER
 INSERT_QUERY="INSERT INTO $TABLE_NAME (artifact_id, n_description, y_description, e_description, area)
     VALUES ('$id', '$escaped_valore1', '$escaped_valore2', '$escaped_valore3', '$area');"
 
 mysql -u $DB_USER -p $DB_NAME -e "$INSERT_QUERY"
 
-echo "[ OK ] RECORD INSERTED SUCCESSFULLY" 
+echo "[ OK ] RECORD INSERTED SUCCESSFULLY"
