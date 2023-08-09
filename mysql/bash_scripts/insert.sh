@@ -7,10 +7,8 @@
 
 # INSERT HERE YOUR DATA (WHEN THE PROGRAM RUNS, YOU WILL BE ASKED TO INSERT YOUR PASSWORD TO GET ACCESS)
 DB_USER=""
-DB_PASS=""
 DB_NAME=""
 TABLE_NAME=""
-COLUMN_NAME=""
 
 # ARTIFACT ID_CODE (IT IS A PRIMARY KEY)
 id=""
@@ -28,9 +26,9 @@ e_description=""
 area=""
 
 # HERE ESCAPE CHARACTERS THAT MYSQL DOES NOT LIKE, YOU CAN EXTEND IT
-escaped_valore1=$(echo "$n_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g")
-escaped_valore2=$(echo "$y_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g")
-escaped_valore3=$(echo "$e_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g")
+escaped_valore1=$(echo "$n_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g" -e 's/"/\\"/g')
+escaped_valore2=$(echo "$y_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g" -e 's/"/\\"/g')
+escaped_valore3=$(echo "$e_description" | sed -e "s/(/\\(/g" -e "s/)/\\)/g" -e "s/'/\\\\'/g" -e 's/"/\\"/g')
 
 # INSERT INTO A TABLE
 INSERT_QUERY="INSERT INTO $TABLE_NAME (artifact_id, n_description, y_description, e_description, area)
