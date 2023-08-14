@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/include/mysql"
+                "/usr/include/mysql",
+                "/usr/include/json-c/json"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

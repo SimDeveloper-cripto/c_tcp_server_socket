@@ -8,8 +8,8 @@
 #include <json-c/json.h>
 
 // HERE WE LIST MYSQL CONNECTION VARIABLES
-char* server = "localhost";
-char* user = "root";            /* Remeber to change this value. */
+char* server   = "localhost";
+char* user     = "root";        /* Remeber to change this value. */
 char* database = "history4fun"; /* Remeber to change this value. */
 
 // MYSQL RELATED FUNCTIONS
