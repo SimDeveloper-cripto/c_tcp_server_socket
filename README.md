@@ -5,9 +5,9 @@ To breefly explain what the server does, basically it handles connections from c
     1. The client sends to the server its data so that the server can perform queries. <br />
     2. The server sends back to the client the results he retrieved.
 <br /> The motivation that led to the development of this project was the need to create a client-server application for museum users.
-<br /> The development process of this project took place in a Linux environment, Ubuntu20.04 to be specific.
+<br /> The development process of this project took place in a Linux environment, to be specific: Ubuntu20.04.6 and Ubuntu22.04.3.
 
-## MySQL get started tutorial on Ubuntu20.04
+## MySQL get started tutorial on Ubuntu
 
 ### Install MySQL
 ```console
@@ -18,6 +18,8 @@ $ sudo apt install mysql-server && mysql --version
 ### Start MySQL server, configure security script and Login as root user
 ```console
 $ sudo /etc/init.d/mysql start
+$ sudo mysql
+$ ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY ''; # Here change your root password and quit mysql.
 $ sudo mysql_secure_installation
 $ sudo /etc/init.d/mysql stop && sudo /etc/init.d/mysql start
 $ mysql -u root -p
