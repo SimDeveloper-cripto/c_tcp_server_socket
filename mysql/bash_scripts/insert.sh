@@ -36,4 +36,8 @@ INSERT_QUERY="INSERT INTO $TABLE_NAME (artifact_id, n_description, y_description
 
 mysql -u $DB_USER -p $DB_NAME -e "$INSERT_QUERY"
 
-echo "[ OK ] RECORD INSERTED SUCCESSFULLY"
+if [ $? -eq 0 ]; then
+    echo "[OK] RECORD INSERTED SUCCESSFULLY."
+else
+    echo "[FAIL] FAILED TO INSERT RECORD."
+fi
