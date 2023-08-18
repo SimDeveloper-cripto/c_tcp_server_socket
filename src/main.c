@@ -115,6 +115,60 @@ void send_random_code(int new_socket) {
     return;
 }
 
+void manage_get_ticket(int new_socket, struct json_object* parsed_json) {
+    struct json_object* json_ticket_id;
+    json_object_object_get_ex(parsed_json, "ticket_id", &json_ticket_id);
+    const char* ticket_id    = json_object_get_string(json_ticket_id);
+
+    char query[256];
+    snprintf(query, sizeof(query), "SELECT * FROM tickets WHERE ticket_id='%s'", ticket_id);
+    if (!exists(connection, query)) {
+        struct json_object* json_user_id;
+        struct json_object* json_n_followers;
+        struct json_object* json_ticket_date;
+        struct json_object* json_type;
+        struct json_object* json_cost;
+        struct json_object* json_area;
+
+        json_object_object_get_ex(parsed_json, "user_id", &json_user_id);
+        json_object_object_get_ex(parsed_json, "n_followers", &json_n_followers);
+        json_object_object_get_ex(parsed_json, "ticket_date", &json_ticket_date);
+        json_object_object_get_ex(parsed_json, "type", &json_type);
+        json_object_object_get_ex(parsed_json, "cost", &json_cost);
+        json_object_object_get_ex(parsed_json, "area", &json_area);
+
+        const char* user_id       = json_object_get_string(json_user_id);
+        const int32_t n_followers = json_object_get_int(json_n_followers);
+        const char* ticket_date   = json_object_get_string(json_ticket_date);
+        const char* type          = json_object_get_string(json_type);
+
+        double cost      = json_object_get_double(json_cost);
+        float cost_value = (float) cost;
+
+        const char* area          = json_object_get_string(json_area);
+
+        char query_insert[1024];
+        snprintf(query_insert, sizeof(query_insert), "INSERT INTO tickets (ticket_id, user_id, n_followers, ticket_date, type, cost, area) VALUES ('%s', '%s', '%d', '%s', '%s', '%f', '%s')", 
+            ticket_id, user_id, n_followers, ticket_date, type, cost_value, area);
+
+        pthread_mutex_lock(&lock);
+        if (mysql_real_query(connection, query_insert, strlen(query_insert))) {
+            printf("[ERROR] INSERT failed: %s\n", mysql_error(connection));
+            exit(1);
+        }
+        pthread_mutex_unlock(&lock);
+
+        // TODO: QUESTA FUNZIONE POTREBBE DOVER RITORNARE (PROBABILMENTE) ANCHE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
+        char second_query[256];
+        snprintf(second_query, sizeof(second_query), "SELECT ticket_id,cost FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
+        make_query_send_json(new_socket, connection, second_query, "SUCCESS");
+    } else {
+        send_failure_json(new_socket);
+    }
+
+    return;
+}
+
 void manage_alter_password(int new_socket, struct json_object* parsed_json) {
     struct json_object* json_new_pass;
     struct json_object* json_email;
@@ -150,26 +204,6 @@ void manage_forgot_password(int new_socket, struct json_object* parsed_json) {
         send_random_code(new_socket);
     } else {
         // 3. HANDLE "FAILURE" RESPONSE
-        send_failure_json(new_socket);
-    }
-    return;
-}
-
-void manage_login(int new_socket, struct json_object* parsed_json) {
-    struct json_object* json_email;
-    struct json_object* json_pass;
-
-    json_object_object_get_ex(parsed_json, "email", &json_email);
-    json_object_object_get_ex(parsed_json, "password", &json_pass);
-
-    const char* email = json_object_get_string(json_email);
-    const char* pass = json_object_get_string(json_pass);
-
-    char query[256];
-    snprintf(query, sizeof(query), "SELECT * FROM users WHERE email='%s' AND password='%s'", email, pass);
-    if (exists(connection, query)) {
-        make_query_send_json(new_socket, connection, query, "SUCCESS");
-    } else {
         send_failure_json(new_socket);
     }
     return;
@@ -227,6 +261,26 @@ void manage_register(int new_socket, struct json_object* parsed_json) {
     return;
 }
 
+void manage_login(int new_socket, struct json_object* parsed_json) {
+    struct json_object* json_email;
+    struct json_object* json_pass;
+
+    json_object_object_get_ex(parsed_json, "email", &json_email);
+    json_object_object_get_ex(parsed_json, "password", &json_pass);
+
+    const char* email = json_object_get_string(json_email);
+    const char* pass = json_object_get_string(json_pass);
+
+    char query[256];
+    snprintf(query, sizeof(query), "SELECT * FROM users WHERE email='%s' AND password='%s'", email, pass);
+    if (exists(connection, query)) {
+        make_query_send_json(new_socket, connection, query, "SUCCESS");
+    } else {
+        send_failure_json(new_socket);
+    }
+    return;
+}
+
 void* connection_handler(void* socket_desc) {
     int new_socket = (*(int*) socket_desc);
     char buffer_json_msg[BUFFER_DIM];
@@ -256,6 +310,8 @@ void* connection_handler(void* socket_desc) {
                 manage_forgot_password(new_socket, parsed_json);
             } else if (strcmp(myflag, "NEW_PASSWORD") == 0) {
                 manage_alter_password(new_socket, parsed_json);
+            } else if (strcmp(myflag, "GET_TICKET") == 0) {
+                manage_get_ticket(new_socket, parsed_json);
             }
         }
     }

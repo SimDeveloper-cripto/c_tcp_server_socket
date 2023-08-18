@@ -26,5 +26,6 @@ void manage_login(int new_socket, struct json_object* parsed_json);
 void manage_register(int new_socket, struct json_object* parsed_json);
 void manage_forgot_password(int new_socket, struct json_object* parsed_json);
 void manage_alter_password(int new_socket, struct json_object* parsed_json);
+void manage_get_ticket(int new_socket, struct json_object* parsed_json);
 
 #endif /* MAIN_H */

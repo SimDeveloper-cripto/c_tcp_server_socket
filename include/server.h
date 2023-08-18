@@ -21,9 +21,7 @@ typedef struct {
 } server_t;
 
 // [SERVER CONSTRUCTOR]
-server_t create_server(int address_family, int service, int protocol, u_long interface, int port,
-    int backlog);
-
+server_t create_server(int address_family, int service, int protocol, u_long interface, int port, int backlog);
 void launch(server_t* server);
 
 #endif /* SERVER_H */

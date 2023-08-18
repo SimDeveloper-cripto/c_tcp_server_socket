@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-server_t create_server(int address_family, int service, int protocol, u_long interface, int port, 
-    int backlog) {
+server_t create_server(int address_family, int service, int protocol, u_long interface, int port, int backlog) {
     int opt = 1;
     server_t server;
 
