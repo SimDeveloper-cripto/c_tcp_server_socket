@@ -48,10 +48,10 @@ void send_generated_json(int new_socket, MYSQL_RES* result, char* flag) {
     json_object_put(jwrapper);
 }
 
-void send_failure_json(int new_socket) {
+void send_failure_json(int new_socket, const char* flag) {
     // RETURNS A JSON OBJECT LIKE {flag: "FAILURE", retrieved_data: []}
     json_object* root = json_object_new_object();
-    json_object_object_add(root, "flag", json_object_new_string("FAILURE"));
+    json_object_object_add(root, "flag", json_object_new_string(flag));
 
     json_object* array = json_object_new_array();
     
@@ -117,53 +117,61 @@ void send_random_code(int new_socket) {
 
 void manage_get_ticket(int new_socket, struct json_object* parsed_json) {
     struct json_object* json_ticket_id;
+    struct json_object* json_user_id;
+    struct json_object* json_n_followers;
+    struct json_object* json_ticket_date;
+    struct json_object* json_type;
+    struct json_object* json_cost;
+    struct json_object* json_area;
+
     json_object_object_get_ex(parsed_json, "ticket_id", &json_ticket_id);
+    json_object_object_get_ex(parsed_json, "user_id", &json_user_id);
+    json_object_object_get_ex(parsed_json, "n_followers", &json_n_followers);
+    json_object_object_get_ex(parsed_json, "ticket_date", &json_ticket_date);
+    json_object_object_get_ex(parsed_json, "type", &json_type);
+    json_object_object_get_ex(parsed_json, "cost", &json_cost);
+    json_object_object_get_ex(parsed_json, "area", &json_area);
+
     const char* ticket_id    = json_object_get_string(json_ticket_id);
+    const char* user_id       = json_object_get_string(json_user_id);
+    const int32_t n_followers = json_object_get_int(json_n_followers);
+    const char* ticket_date   = json_object_get_string(json_ticket_date);
+    const char* type          = json_object_get_string(json_type);
+
+    double cost              = json_object_get_double(json_cost);
+    float cost_value         = (float) cost;
+
+    const char* area          = json_object_get_string(json_area);
 
     char query[256];
     snprintf(query, sizeof(query), "SELECT * FROM tickets WHERE ticket_id='%s'", ticket_id);
     if (!exists(connection, query)) {
-        struct json_object* json_user_id;
-        struct json_object* json_n_followers;
-        struct json_object* json_ticket_date;
-        struct json_object* json_type;
-        struct json_object* json_cost;
-        struct json_object* json_area;
-
-        json_object_object_get_ex(parsed_json, "user_id", &json_user_id);
-        json_object_object_get_ex(parsed_json, "n_followers", &json_n_followers);
-        json_object_object_get_ex(parsed_json, "ticket_date", &json_ticket_date);
-        json_object_object_get_ex(parsed_json, "type", &json_type);
-        json_object_object_get_ex(parsed_json, "cost", &json_cost);
-        json_object_object_get_ex(parsed_json, "area", &json_area);
-
-        const char* user_id       = json_object_get_string(json_user_id);
-        const int32_t n_followers = json_object_get_int(json_n_followers);
-        const char* ticket_date   = json_object_get_string(json_ticket_date);
-        const char* type          = json_object_get_string(json_type);
-
-        double cost      = json_object_get_double(json_cost);
-        float cost_value = (float) cost;
-
-        const char* area          = json_object_get_string(json_area);
-
-        char query_insert[1024];
-        snprintf(query_insert, sizeof(query_insert), "INSERT INTO tickets (ticket_id, user_id, n_followers, ticket_date, type, cost, area) VALUES ('%s', '%s', '%d', '%s', '%s', '%f', '%s')", 
-            ticket_id, user_id, n_followers, ticket_date, type, cost_value, area);
-
-        pthread_mutex_lock(&lock);
-        if (mysql_real_query(connection, query_insert, strlen(query_insert))) {
-            printf("[ERROR] INSERT failed: %s\n", mysql_error(connection));
-            exit(1);
-        }
-        pthread_mutex_unlock(&lock);
-
-        // TODO: QUESTA FUNZIONE POTREBBE DOVER RITORNARE (PROBABILMENTE) ANCHE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
         char second_query[256];
-        snprintf(second_query, sizeof(second_query), "SELECT ticket_id,cost FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
-        make_query_send_json(new_socket, connection, second_query, "SUCCESS");
+        snprintf(second_query, sizeof(second_query), "SELECT * FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
+        if (!exists(connection, second_query)) {
+            // snprintf(second_query, sizeof(second_query), "SELECT ticket_id,cost FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
+        
+            char query_insert[1024];
+            snprintf(query_insert, sizeof(query_insert), "INSERT INTO tickets (ticket_id, user_id, n_followers, ticket_date, type, cost, area) VALUES ('%s', '%s', '%d', '%s', '%s', '%f', '%s')", 
+                ticket_id, user_id, n_followers, ticket_date, type, cost_value, area);
+
+            pthread_mutex_lock(&lock);
+            if (mysql_real_query(connection, query_insert, strlen(query_insert))) {
+                printf("[ERROR] INSERT failed: %s\n", mysql_error(connection));
+                exit(1);
+            }
+            pthread_mutex_unlock(&lock);
+
+            // TODO: QUESTA FUNZIONE POTREBBE DOVER RITORNARE (PROBABILMENTE) ANCHE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
+            char return_query[256];
+            snprintf(return_query, sizeof(return_query), "SELECT ticket_id,cost FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
+            make_query_send_json(new_socket, connection, second_query, "SUCCESS");
+        } else {
+            send_failure_json(new_socket, "ALREADY_EXISTS");
+        }
     } else {
-        send_failure_json(new_socket);
+        // QUESTO ERRORE PUO' ESSERE GENERATO SOLO NEL CASO DAVVERO IMPROBABILE CHE VENGANO GENERATI DUE TICKET_CODES UGUALI
+        send_failure_json(new_socket, "FAILURE");
     }
 
     return;
@@ -184,7 +192,7 @@ void manage_alter_password(int new_socket, struct json_object* parsed_json) {
         
     pthread_mutex_lock(&lock);
     if (mysql_real_query(connection, query, strlen(query))) {
-        send_failure_json(new_socket);
+        send_failure_json(new_socket, "FAILURE");
     } else {
         send_success_json_empty_body(new_socket);
     }
@@ -204,7 +212,7 @@ void manage_forgot_password(int new_socket, struct json_object* parsed_json) {
         send_random_code(new_socket);
     } else {
         // 3. HANDLE "FAILURE" RESPONSE
-        send_failure_json(new_socket);
+        send_failure_json(new_socket, "FAILURE");
     }
     return;
 }
@@ -256,7 +264,7 @@ void manage_register(int new_socket, struct json_object* parsed_json) {
         snprintf(query2, sizeof(query), "SELECT * FROM users WHERE user_id='%s'", u_id);
         make_query_send_json(new_socket, connection, query2, "SUCCESS");
     } else {
-        send_failure_json(new_socket);
+        send_failure_json(new_socket, "FAILURE");
     }
     return;
 }
@@ -276,7 +284,7 @@ void manage_login(int new_socket, struct json_object* parsed_json) {
     if (exists(connection, query)) {
         make_query_send_json(new_socket, connection, query, "SUCCESS");
     } else {
-        send_failure_json(new_socket);
+        send_failure_json(new_socket, "FAILURE");
     }
     return;
 }
