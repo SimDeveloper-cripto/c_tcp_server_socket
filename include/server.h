@@ -1,9 +1,11 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <mysql.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <json-c/json.h>
 
 // ...
 
@@ -22,6 +24,15 @@ typedef struct {
 
 // [SERVER CONSTRUCTOR]
 server_t create_server(int address_family, int service, int protocol, u_long interface, int port, int backlog);
+
 void launch(server_t* server);
+
+// SERVER RELATED FUNCTIONS
+void send_random_code(int new_socket);
+void manage_login(int new_socket, struct json_object* parsed_json);
+void manage_register(int new_socket, struct json_object* parsed_json);
+void manage_forgot_password(int new_socket, struct json_object* parsed_json);
+void manage_alter_password(int new_socket, struct json_object* parsed_json);
+void manage_get_ticket(int new_socket, struct json_object* parsed_json);
 
 #endif /* SERVER_H */

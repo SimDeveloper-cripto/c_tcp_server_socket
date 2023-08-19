@@ -10,6 +10,8 @@
         "json.h": "c",
         "mysql.h": "c",
         "socket.h": "c",
-        "inet.h": "c"
+        "inet.h": "c",
+        "main.h": "c",
+        "stdlib.h": "c"
     }
 }

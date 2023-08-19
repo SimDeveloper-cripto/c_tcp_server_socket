@@ -1,9 +1,9 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <time.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 
 #define BUZZ_SIZE 1024
 

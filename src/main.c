@@ -10,7 +10,6 @@
 #include <string.h>
 #include <pthread.h>
 #include <stdbool.h>
-#include <json-c/json.h>
 
 #define BUFFER_DIM 512
 #define MAX_CLIENTS 10
