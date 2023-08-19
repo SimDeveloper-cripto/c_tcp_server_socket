@@ -148,8 +148,6 @@ void manage_get_ticket(int new_socket, struct json_object* parsed_json) {
         char second_query[256];
         snprintf(second_query, sizeof(second_query), "SELECT * FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
         if (!exists(connection, second_query)) {
-            // snprintf(second_query, sizeof(second_query), "SELECT ticket_id,cost FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
-        
             char query_insert[1024];
             snprintf(query_insert, sizeof(query_insert), "INSERT INTO tickets (ticket_id, user_id, n_followers, ticket_date, type, cost, area) VALUES ('%s', '%s', '%d', '%s', '%s', '%f', '%s')", 
                 ticket_id, user_id, n_followers, ticket_date, type, cost_value, area);
@@ -164,7 +162,7 @@ void manage_get_ticket(int new_socket, struct json_object* parsed_json) {
             // TODO: QUESTA FUNZIONE POTREBBE DOVER RITORNARE (PROBABILMENTE) ANCHE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
             char return_query[256];
             snprintf(return_query, sizeof(return_query), "SELECT ticket_id,cost FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
-            make_query_send_json(new_socket, connection, second_query, "SUCCESS");
+            make_query_send_json(new_socket, connection, return_query, "SUCCESS");
         } else {
             send_failure_json(new_socket, "ALREADY_EXISTS");
         }
