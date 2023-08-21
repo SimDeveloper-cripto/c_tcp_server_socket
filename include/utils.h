@@ -7,6 +7,10 @@
 
 #define BUZZ_SIZE 1024
 
+// HERE WE LIST MYSQL CONNECTION VARIABLES
+char* server   = "localhost";
+char* user     = "root";        /* Remeber to change this value. */
+char* database = "history4fun"; /* Remeber to change this value. */
 static char mysql_password_buffer[BUZZ_SIZE];
 
 char* util_read_password_from_file();

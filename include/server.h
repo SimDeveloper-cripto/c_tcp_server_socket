@@ -26,13 +26,14 @@ typedef struct {
 server_t create_server(int address_family, int service, int protocol, u_long interface, int port, int backlog);
 
 void launch(server_t* server);
+bool exists(MYSQL* connection, char query[], pthread_mutex_t lock);
 
 // SERVER RELATED FUNCTIONS
 void send_random_code(int new_socket);
-void manage_login(int new_socket, struct json_object* parsed_json);
-void manage_register(int new_socket, struct json_object* parsed_json);
-void manage_forgot_password(int new_socket, struct json_object* parsed_json);
-void manage_alter_password(int new_socket, struct json_object* parsed_json);
-void manage_get_ticket(int new_socket, struct json_object* parsed_json);
+void manage_login(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
+void manage_register(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
+void manage_forgot_password(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
+void manage_alter_password(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
+void manage_get_ticket(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
 
 #endif /* SERVER_H */
