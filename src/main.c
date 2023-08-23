@@ -5,11 +5,8 @@
 #include "../include/utils.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <pthread.h>
-#include <stdbool.h>
 
 #define BUFFER_DIM 512
 #define MAX_CLIENTS 10
@@ -19,6 +16,22 @@ pthread_t thread_pool[20];
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 // ------------------------------- SERVER RELATED FUNCTIONS ------------------------------- //
+void make_query_send_json(int new_socket, MYSQL* connection, char query[], char* flag) {
+    pthread_mutex_lock(&lock);
+    if (mysql_query(connection, query)) {
+		fprintf(stderr, "%s\n", mysql_error(connection));
+		exit(1);
+	}
+
+	MYSQL_RES* result = mysql_store_result(connection);
+    if (result == NULL) {
+        fprintf(stderr, "make_query_send_json() failed.\n");
+        exit(1);
+    }
+    send_generated_json(new_socket, result, flag);
+    pthread_mutex_unlock(&lock);
+}
+
 void send_generated_json(int new_socket, MYSQL_RES* result, char* flag) {
     MYSQL_ROW row;
     int num_fields = mysql_num_fields(result);
@@ -165,22 +178,6 @@ MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
             exit(1);
     }
     return connection;
-}
-
-void make_query_send_json(int new_socket, MYSQL* connection, char query[], char* flag) {
-    pthread_mutex_lock(&lock);
-    if (mysql_query(connection, query)) {
-		fprintf(stderr, "%s\n", mysql_error(connection));
-		exit(1);
-	}
-
-	MYSQL_RES* result = mysql_store_result(connection);
-    if (result == NULL) {
-        fprintf(stderr, "make_query_send_json() failed.\n");
-        exit(1);
-    }
-    send_generated_json(new_socket, result, flag);
-    pthread_mutex_unlock(&lock);
 }
 
 // ------------------------------ MAIN  ------------------------------ //

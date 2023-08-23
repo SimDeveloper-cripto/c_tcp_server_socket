@@ -1,7 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <time.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -11,15 +10,16 @@
 char* server   = "localhost";
 char* user     = "root";        /* Remeber to change this value. */
 char* database = "history4fun"; /* Remeber to change this value. */
-static char mysql_password_buffer[BUZZ_SIZE];
+char mysql_password_buffer[BUZZ_SIZE];
 
+/* FUNCTIONS */
 char* util_read_password_from_file();
 
 #endif /* UTILS_H */
 
 #ifdef UTILS_H_IMPLEMENTATION
 
-// RETRIEVE MYSQL USER PASSWORD FROM A FILE
+// RETRIEVE MYSQL USER'S PASSWORD FROM A FILE
 char* util_read_password_from_file() {
     FILE* f;
     

@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include <mysql.h>
+#include <stdbool.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -25,10 +26,11 @@ typedef struct {
 // [SERVER CONSTRUCTOR]
 server_t create_server(int address_family, int service, int protocol, u_long interface, int port, int backlog);
 
+// SERVER'S MAIN FUNCTION
 void launch(server_t* server);
-bool exists(MYSQL* connection, char query[], pthread_mutex_t lock);
 
 // SERVER RELATED FUNCTIONS
+bool exists(MYSQL* connection, char query[], pthread_mutex_t lock);
 void send_random_code(int new_socket);
 void manage_login(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
 void manage_register(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);

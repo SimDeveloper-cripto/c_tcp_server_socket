@@ -1,25 +1,25 @@
 #include "../include/server.h"
 #include "../include/main.h"
+
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include <unistd.h>
+#include <pthread.h>
 
 server_t create_server(int address_family, int service, int protocol, u_long interface, int port, int backlog) {
     int opt = 1;
     server_t server;
 
     server.address_family = address_family;
-    server.service = service;
-    server.protocol = protocol;
-    server.interface = interface;
-    server.port = port;
-    server.backlog = backlog;
-
-    server.address.sin_family = address_family;
-    server.address.sin_port = htons(port);
+    server.service        = service;
+    server.protocol       = protocol;
+    server.interface      = interface;
+    server.port           = port;
+    server.backlog        = backlog;
+    server.address.sin_family      = address_family;
+    server.address.sin_port        = htons(port);
     server.address.sin_addr.s_addr = htonl(interface);
 
     server.socket = socket(server.address_family, server.service, server.protocol);
