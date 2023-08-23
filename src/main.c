@@ -9,10 +9,10 @@
 #include <pthread.h>
 
 #define BUFFER_DIM 512
-#define MAX_CLIENTS 10
+#define MAX_CLIENTS 20
 
 MYSQL* connection;
-pthread_t thread_pool[20];
+pthread_t thread_pool[30];
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 // ------------------------------- SERVER RELATED FUNCTIONS ------------------------------- //
@@ -155,11 +155,12 @@ void launch(server_t* server) {
         }
         printf("\n[+] Client connection accepted.\n");
         if (pthread_create(&thread_pool[i++], NULL, connection_handler, (void*) &new_socket) < 0) {
-            perror("[-] Could not create thread.");
+            perror("[-] Could not create thread: something bad happened.");
             close(new_socket);
-            exit(1);
+            // exit(1); I DON'T THINK WE SHOULD STOP THE PROGRAM'S EXECUTION: IT'S NOT SAFE.
+        } else {
+		    printf("    [+ +] Thread created for client requests.\n");
         }
-		printf("    [+ +] Thread created for client requests.\n");
         
         if (i >= MAX_CLIENTS) {
             i = 0;
