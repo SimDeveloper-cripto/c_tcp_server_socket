@@ -27,7 +27,7 @@ typedef struct {
 server_t create_server(int address_family, int service, int protocol, u_long interface, int port, int backlog);
 
 // SERVER'S MAIN FUNCTION
-void launch(server_t* server);
+int launch(server_t* server);
 
 // SERVER RELATED FUNCTIONS
 bool exists(MYSQL* connection, char query[], pthread_mutex_t lock);

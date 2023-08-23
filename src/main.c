@@ -137,8 +137,15 @@ void* connection_handler(void* socket_desc) {
     return EXIT_SUCCESS;
 }
 
-void launch(server_t* server) {
-    connection = init_mysql_connection(connection, util_read_password_from_file());
+int launch(server_t* server) {
+    char* pass = util_read_password_from_file();
+    if (pass == NULL) {
+        perror("[-] Server launch() failed: pass is NULL.\n");
+        close(server->socket);
+        return EXIT_FAILURE; // RETURN AN ERROR
+    }
+
+    connection = init_mysql_connection(connection, pass);
     int i = 0;
 
     printf("[+] MySQL connection successful.\n");
@@ -170,6 +177,7 @@ void launch(server_t* server) {
         }
     }
     close(server->socket);
+    return EXIT_SUCCESS;
 }
 
 MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
@@ -186,11 +194,14 @@ int main(int argc, char** argv) {
     pthread_mutex_init(&lock, NULL);
 
     server_t server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10);
-    launch(&server);
-
-	mysql_close(connection); // DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
+    if (launch(&server) == EXIT_FAILURE) {
+        printf("PROGRAM ENDED STATUS [ ERROR ]\n");
+        pthread_mutex_destroy(&lock);
+        return 1;
+    }
+    
+    mysql_close(connection); // DON'T FORGET TO CLOSE MYSQL CONNECTION BEFORE ENDING THE PROGRAM
     pthread_mutex_destroy(&lock);
-
     printf("PROGRAM ENDED STATUS [ OK ]\n");
     return 0;
 }
