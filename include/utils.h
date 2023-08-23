@@ -13,7 +13,7 @@
 char* server   = "localhost";
 char* user     = "root";        /* Remeber to change this value. */
 char* database = "history4fun"; /* Remeber to change this value. */
-char mysql_password_buffer[BUZZ_SIZE];
+static char buffer[BUZZ_SIZE];
 const char* file_path = "../password.txt"; 
 
 /* FUNCTIONS */
@@ -24,7 +24,7 @@ char* util_read_password_from_file();
 #ifdef UTILS_H_IMPLEMENTATION
 
 /*
-    // RETRIEVE MYSQL USER'S PASSWORD FROM A FILE 
+    // RETRIEVE MYSQL USER'S PASSWORD FROM A FILE [WE KEEP IT AS BACKUP FUNCTION]
     char* util_read_password_from_file() {
         FILE* f;
         
@@ -49,25 +49,22 @@ char* util_read_password_from_file() {
         return NULL;
     }
 
-    char *buffer = (char *) malloc(fileSize + 1);
     if (lseek(fd, 0, SEEK_SET) == -1) {
-        perror("[-] An error occurred while trying to read the file.\n");
+        perror("[-] An error occurred while trying to SEEK_SET.\n");
         close(fd);
-        free(buffer);
         return NULL;
     }
 
-    ssize_t bytesRead = read(fd, buffer, fileSize);
-    if (bytesRead != fileSize) {
+    ssize_t bytesRead = read(fd, buffer, BUZZ_SIZE);
+    if (bytesRead < 0) {
         perror("[-] Could not read file.\n");
         close(fd);
-        free(buffer);
         return NULL;
     }
 
     buffer[fileSize] = '\0';
     close(fd);
-    return buffer;
+    return &buffer[0];
 }
 
 // ...
