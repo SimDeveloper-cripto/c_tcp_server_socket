@@ -94,6 +94,30 @@ bool exists(MYSQL* connection, char query[], pthread_mutex_t lock) {
     return (num_rows > 0);
 }
 
+void manage_check_ticket_acquired(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock) {
+    struct json_object* json_user_id;
+    struct json_object* json_ticket_date;
+    struct json_object* json_area;
+
+    json_object_object_get_ex(parsed_json, "user_id", &json_user_id);
+    json_object_object_get_ex(parsed_json, "ticket_date", &json_ticket_date);
+    json_object_object_get_ex(parsed_json, "area", &json_area);
+
+    const char* user_id       = json_object_get_string(json_user_id);
+    const char* ticket_date   = json_object_get_string(json_ticket_date);
+    const char* area          = json_object_get_string(json_area);
+    
+    char query[256];
+    snprintf(query, sizeof(query), "SELECT * FROM tickets WHERE user_id='%s' AND ticket_date='%s' AND area='%s'", user_id, ticket_date, area);
+    if (!exists(connection, query, lock)) {
+        send_failure_json(new_socket, "FAILURE");
+    } else {
+        // TODO: INVIARE LE IMMAGINI
+        // TODO: QUESTA FUNZIONE POTREBBE DOVER RITORNARE (PROBABILMENTE) ANCHE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
+        send_success_json_empty_body(new_socket);
+    }
+}
+
 void manage_get_ticket(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock) {
     struct json_object* json_ticket_id;
     struct json_object* json_user_id;
@@ -139,7 +163,6 @@ void manage_get_ticket(int new_socket, struct json_object* parsed_json, MYSQL* c
             }
             pthread_mutex_unlock(&lock);
 
-            // TODO: QUESTA FUNZIONE POTREBBE DOVER RITORNARE (PROBABILMENTE) ANCHE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
             char return_query[256];
             snprintf(return_query, sizeof(return_query), "SELECT ticket_id,cost FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
             make_query_send_json(new_socket, connection, return_query, "SUCCESS");

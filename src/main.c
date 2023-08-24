@@ -130,6 +130,8 @@ void* connection_handler(void* socket_desc) {
                 manage_alter_password(new_socket, parsed_json, connection, lock);
             } else if (strcmp(myflag, "GET_TICKET") == 0) {
                 manage_get_ticket(new_socket, parsed_json, connection, lock);
+            } else if (strcmp(myflag, "CHK_ACQRD_TICKET") == 0) {
+                manage_check_ticket_acquired(new_socket, parsed_json, connection, lock);
             }
         }
     }
