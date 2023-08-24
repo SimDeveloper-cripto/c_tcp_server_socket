@@ -94,6 +94,73 @@ bool exists(MYSQL* connection, char query[], pthread_mutex_t lock) {
     return (num_rows > 0);
 }
 
+char* encode_to_base64(const char* filename) {
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL) {
+        printf("[-] Error: could not open file: %s", filename);
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    rewind(file);
+
+    char* data = (char*) malloc(file_size);
+    if (data == NULL) {
+        printf("[-] Error: memory allocation for file data (encoding base64) of: %s", filename);
+        fclose(file);
+        return NULL;
+    }
+
+    fread(data, 1, file_size, file);
+    fclose(file);
+    return data;
+}
+
+// TODO: EVENTUALMENTE QUESTA FUNZIONE ANDRA' MODIFICATA
+int processImagesAndSendJson(int new_socket, const char* flag) {
+    struct dirent *entry;
+    const char* folder_path = "../images/jurassic";
+
+    DIR *dir = opendir(folder_path);
+    if (dir == NULL) {
+        perror("[-] Error: could not open directory.");
+        return 1;
+    }
+
+    json_object *image_array = json_object_new_array();
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_REG) { // CHECK IF IT IS A REGULAR DIRECTORY
+            char filepath[512];
+            snprintf(filepath, sizeof(filepath), "%s/%s", folder_path, entry->d_name);
+
+            // BASE64 ENCODING OF THE IMAGE
+            char *image_data_base64 = encode_to_base64(filepath);
+            if (image_data_base64) {
+                json_object *image_object = json_object_new_object();
+                json_object_object_add(image_object, "image_name", json_object_new_string(entry->d_name));
+                json_object_object_add(image_object, "image_data", json_object_new_string(image_data_base64));
+                json_object_array_add(image_array, image_object);
+                free(image_data_base64);
+            }
+        }
+    }
+
+    closedir(dir);
+    json_object *json_root = json_object_new_object();
+    json_object_object_add(json_root, "flag", json_object_new_string(flag));
+    json_object_object_add(json_root, "images", image_array);
+
+    const char *json_string = json_object_to_json_string(json_root);
+    if (write(new_socket, json_string, strlen(json_string)) < 0) {
+        perror("      [- - -] Failed to send json (encode base64 of image) to the client.\n");
+        exit(1);
+    }
+    json_object_put(json_root);
+
+    return 0;
+}
+
 void manage_check_ticket_acquired(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock) {
     struct json_object* json_user_id;
     struct json_object* json_ticket_date;
@@ -112,9 +179,13 @@ void manage_check_ticket_acquired(int new_socket, struct json_object* parsed_jso
     if (!exists(connection, query, lock)) {
         send_failure_json(new_socket, "FAILURE");
     } else {
-        // TODO: INVIARE LE IMMAGINI
-        // TODO: QUESTA FUNZIONE POTREBBE DOVER RITORNARE (PROBABILMENTE) ANCHE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
         send_success_json_empty_body(new_socket);
+        // TODO: INVIARE LE IMMAGINI: QUESTA FUNZIONE POTREBBE DOVER RITORNARE (PROBABILMENTE) ANCHE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
+        /*
+            if (processImagesAndSendJson(new_socket, "SUCCESS") == 1) {
+                printf("[-] Error: processImagesAndSendJson() failed.\n");
+            }
+        */
     }
 }
 
