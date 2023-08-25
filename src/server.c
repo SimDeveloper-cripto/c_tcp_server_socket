@@ -112,8 +112,10 @@ void manage_check_ticket_acquired(int new_socket, struct json_object* parsed_jso
     if (!exists(connection, query, lock)) {
         send_failure_json(new_socket, "FAILURE");
     } else {
-        // TODO: INVIARE LE IMMAGINI: QUESTA FUNZIONE POTREBBE DOVER RITORNARE (PROBABILMENTE) ANCHE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
-        send_success_json_empty_body(new_socket);
+        // TODO: QUESTA FUNZIONE DEVE RITORNARE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
+        char return_query[256];
+        snprintf(return_query, sizeof(return_query), "SELECT area FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
+        make_query_send_json(new_socket, connection, return_query, "SUCCESS");
     }
 }
 
