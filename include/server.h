@@ -2,7 +2,6 @@
 #define SERVER_H
 
 #include <mysql.h>
-#include <dirent.h>
 #include <stdbool.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -39,6 +38,5 @@ void manage_forgot_password(int new_socket, struct json_object* parsed_json, MYS
 void manage_alter_password(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
 void manage_get_ticket(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
 void manage_check_ticket_acquired(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
-int processImagesAndSendJson(int new_socket, const char* flag);
 
 #endif /* SERVER_H */
