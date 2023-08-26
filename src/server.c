@@ -113,6 +113,8 @@ void manage_check_ticket_acquired(int new_socket, struct json_object* parsed_jso
         send_failure_json(new_socket, "FAILURE");
     } else {
         // TODO: QUESTA FUNZIONE DEVE RITORNARE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
+        // 1. ALLA QUERY ALLEGARE COME RISULTATO IL TIPO DI UTENZA DEL BIGLIETTO.
+        // 2. IL CLIENT DEVE MANDARE UN'ALTRA FLAG PER RICHIEDERE POI LE DESCRIZIONI (ALTRA FUNZIONE).
         char return_query[256];
         snprintf(return_query, sizeof(return_query), "SELECT area FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
         make_query_send_json(new_socket, connection, return_query, "SUCCESS");
