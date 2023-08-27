@@ -38,5 +38,7 @@ void manage_forgot_password(int new_socket, struct json_object* parsed_json, MYS
 void manage_alter_password(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
 void manage_get_ticket(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
 void manage_check_ticket_acquired(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
+void manage_retrieve_ticket_type(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
+void manage_retrieve_opera_descriptions(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
 
 #endif /* SERVER_H */

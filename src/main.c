@@ -132,6 +132,10 @@ void* connection_handler(void* socket_desc) {
                 manage_get_ticket(new_socket, parsed_json, connection, lock);
             } else if (strcmp(myflag, "CHK_ACQRD_TICKET") == 0) {
                 manage_check_ticket_acquired(new_socket, parsed_json, connection, lock);
+            } else if (strcmp(myflag, "GET_TCKT_TYPE") == 0) {
+                manage_retrieve_ticket_type(new_socket, parsed_json, connection, lock);
+            } else if (strcmp(myflag, "GET_OP_DESC") == 0) {
+                manage_retrieve_opera_descriptions(new_socket, parsed_json, connection, lock);
             }
         }
     }

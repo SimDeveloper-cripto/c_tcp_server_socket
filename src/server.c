@@ -94,6 +94,36 @@ bool exists(MYSQL* connection, char query[], pthread_mutex_t lock) {
     return (num_rows > 0);
 }
 
+void manage_retrieve_opera_descriptions(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock){
+    struct json_object* json_area;
+    struct json_object* json_description;
+
+    json_object_object_get_ex(parsed_json, "area", &json_area);
+    json_object_object_get_ex(parsed_json, "description", &json_description);
+    
+    const char* area        = json_object_get_string(json_area);
+    const char* description = json_object_get_string(json_description);
+    
+    char return_query[256];
+    snprintf(return_query, sizeof(return_query), "SELECT artifact_id,%s FROM artifacts WHERE area='%s' ORDER BY artifact_id", description, area);
+    make_query_send_json(new_socket, connection, return_query, "SUCCESS");
+}
+
+void manage_retrieve_ticket_type(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock) {
+    struct json_object* json_user_id;
+    struct json_object* json_ticket_date;
+
+    json_object_object_get_ex(parsed_json, "user_id", &json_user_id);
+    json_object_object_get_ex(parsed_json, "ticket_date", &json_ticket_date);
+    
+    const char* user_id       = json_object_get_string(json_user_id);
+    const char* ticket_date   = json_object_get_string(json_ticket_date);
+    
+    char return_query[256];
+    snprintf(return_query, sizeof(return_query), "SELECT type FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
+    make_query_send_json(new_socket, connection, return_query, "SUCCESS");
+}
+
 void manage_check_ticket_acquired(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock) {
     struct json_object* json_user_id;
     struct json_object* json_ticket_date;
@@ -112,10 +142,10 @@ void manage_check_ticket_acquired(int new_socket, struct json_object* parsed_jso
     if (!exists(connection, query, lock)) {
         send_failure_json(new_socket, "FAILURE");
     } else {
-        // TODO: QUESTA FUNZIONE DEVE RITORNARE LE DESCRIZIONI DELLE OPERE NEL JSON DI RISPOSTA
-        // 1. ALLA QUERY ALLEGARE COME RISULTATO IL TIPO DI UTENZA DEL BIGLIETTO.
-        // 2. IL CLIENT DEVE MANDARE UN'ALTRA FLAG PER RICHIEDERE POI LE DESCRIZIONI (ALTRA FUNZIONE).
         char return_query[256];
+
+        // HERE WE RETURN JUST THE AREA CHOSEN BY THE USERS FOR THAT SPECIFIC DAY
+        // TO GET ALL THE DESCRIPTIONS WE USE ANOTHER FLAG
         snprintf(return_query, sizeof(return_query), "SELECT area FROM tickets WHERE user_id='%s' AND ticket_date='%s'", user_id, ticket_date);
         make_query_send_json(new_socket, connection, return_query, "SUCCESS");
     }
