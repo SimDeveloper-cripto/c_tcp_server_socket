@@ -103,10 +103,16 @@ void manage_retrieve_opera_descriptions(int new_socket, struct json_object* pars
     
     const char* area        = json_object_get_string(json_area);
     const char* description = json_object_get_string(json_description);
-    
-    char return_query[256];
-    snprintf(return_query, sizeof(return_query), "SELECT artifact_id,%s FROM artifacts WHERE area='%s' ORDER BY artifact_id", description, area);
-    make_query_send_json(new_socket, connection, return_query, "SUCCESS");
+
+    if (strcmp(area, "full") == 0) {
+        char return_query[256];
+        snprintf(return_query, sizeof(return_query), "SELECT artifact_id,%s FROM artifacts ORDER BY artifact_id", description);
+        make_query_send_json(new_socket, connection, return_query, "SUCCESS");
+    } else {
+        char return_query[256];
+        snprintf(return_query, sizeof(return_query), "SELECT artifact_id,%s FROM artifacts WHERE area='%s' ORDER BY artifact_id", description, area);
+        make_query_send_json(new_socket, connection, return_query, "SUCCESS");
+    }
 }
 
 void manage_retrieve_ticket_type(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock) {
@@ -138,7 +144,7 @@ void manage_check_ticket_acquired(int new_socket, struct json_object* parsed_jso
     const char* area          = json_object_get_string(json_area);
     
     char query[256];
-    snprintf(query, sizeof(query), "SELECT * FROM tickets WHERE user_id='%s' AND ticket_date='%s' AND area='%s'", user_id, ticket_date, area);
+    snprintf(query, sizeof(query), "SELECT * FROM tickets WHERE user_id='%s' AND ticket_date='%s' AND (area='%s' OR area='full')", user_id, ticket_date, area);
     if (!exists(connection, query, lock)) {
         send_failure_json(new_socket, "FAILURE");
     } else {
