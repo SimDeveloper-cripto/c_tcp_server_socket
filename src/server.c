@@ -94,6 +94,61 @@ bool exists(MYSQL* connection, char query[], pthread_mutex_t lock) {
     return (num_rows > 0);
 }
 
+void manage_add_artifact_comment(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock) {
+    struct json_object* json_user_id;
+    struct json_object* json_artifact_id;
+    struct json_object* json_comment;
+    struct json_object* json_comment_date;
+
+    json_object_object_get_ex(parsed_json, "user_id", &json_user_id);
+    json_object_object_get_ex(parsed_json, "artifact_id", &json_artifact_id);
+    json_object_object_get_ex(parsed_json, "comment", &json_comment);
+    json_object_object_get_ex(parsed_json, "comment_date", &json_comment_date);
+
+    const char* user_id      = json_object_get_string(json_user_id);
+    const char* artifact_id  = json_object_get_string(json_artifact_id);
+    const char* comment      = json_object_get_string(json_comment);
+    const char* comment_date = json_object_get_string(json_comment_date);
+
+    char insert_query[512];
+    snprintf(insert_query, sizeof(insert_query),
+        "INSERT INTO to_comment(user_id, artifact_id, comment, comment_date) values ('%s', '%s', '%s', '%s')", user_id, artifact_id, comment, comment_date);
+
+    char control_query[256];
+    snprintf(control_query, sizeof(control_query), "SELECT * FROM to_comment WHERE comment='%s'", comment);
+
+    if (!exists(connection, control_query, lock)) {
+        pthread_mutex_lock(&lock);
+        if (mysql_real_query(connection, insert_query, strlen(insert_query))) {
+            printf("[ERROR] INSERT failed: %s\n", mysql_error(connection));
+            exit(1);
+        }
+        pthread_mutex_unlock(&lock);
+
+        send_success_json_empty_body(new_socket);
+    } else {
+        send_failure_json(new_socket, "FAILURE");
+    }
+}
+
+void manage_retrieve_comments(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock) {
+    struct json_object* json_artifact_id;
+
+    json_object_object_get_ex(parsed_json, "artifact_id", &json_artifact_id);
+
+    const char* artifact_id = json_object_get_string(json_artifact_id);
+
+    char return_query[512];
+    snprintf(return_query, sizeof(return_query),
+        "SELECT users.name, users.surname, to_comment.comment FROM users INNER JOIN to_comment ON users.user_id = to_comment.user_id WHERE artifact_id='%s' LIMIT 3", 
+            artifact_id);
+    if (!exists(connection, return_query, lock)) {
+        send_failure_json(new_socket, "FAILURE");
+    } else {
+        make_query_send_json(new_socket, connection, return_query, "SUCCESS");
+    }
+}
+
 void manage_retrieve_opera_descriptions(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock){
     struct json_object* json_area;
     struct json_object* json_description;
@@ -212,8 +267,6 @@ void manage_get_ticket(int new_socket, struct json_object* parsed_json, MYSQL* c
         // QUESTO ERRORE PUO' ESSERE GENERATO SOLO NEL CASO DAVVERO IMPROBABILE CHE VENGANO GENERATI DUE TICKET_CODES UGUALI
         send_failure_json(new_socket, "FAILURE");
     }
-
-    return;
 }
 
 void manage_alter_password(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock) {
@@ -253,7 +306,6 @@ void manage_forgot_password(int new_socket, struct json_object* parsed_json, MYS
         // 3. HANDLE "FAILURE" RESPONSE
         send_failure_json(new_socket, "FAILURE");
     }
-    return;
 }
 
 void manage_register(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock) {
@@ -305,7 +357,6 @@ void manage_register(int new_socket, struct json_object* parsed_json, MYSQL* con
     } else {
         send_failure_json(new_socket, "FAILURE");
     }
-    return;
 }
 
 void manage_login(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock) {
@@ -325,5 +376,4 @@ void manage_login(int new_socket, struct json_object* parsed_json, MYSQL* connec
     } else {
         send_failure_json(new_socket, "FAILURE");
     }
-    return;
 }

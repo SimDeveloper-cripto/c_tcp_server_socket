@@ -40,5 +40,7 @@ void manage_get_ticket(int new_socket, struct json_object* parsed_json, MYSQL* c
 void manage_check_ticket_acquired(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
 void manage_retrieve_ticket_type(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
 void manage_retrieve_opera_descriptions(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
+void manage_retrieve_comments(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
+void manage_add_artifact_comment(int new_socket, struct json_object* parsed_json, MYSQL* connection, pthread_mutex_t lock);
 
 #endif /* SERVER_H */

@@ -136,6 +136,10 @@ void* connection_handler(void* socket_desc) {
                 manage_retrieve_ticket_type(new_socket, parsed_json, connection, lock);
             } else if (strcmp(myflag, "GET_OP_DESC") == 0) {
                 manage_retrieve_opera_descriptions(new_socket, parsed_json, connection, lock);
+            } else if (strcmp(myflag, "GET_COMMENT") == 0) {
+                manage_retrieve_comments(new_socket, parsed_json, connection, lock);
+            } else if (strcmp(myflag, "ADD_COMMENT") == 0) {
+                manage_add_artifact_comment(new_socket, parsed_json, connection, lock);
             }
         }
     }
