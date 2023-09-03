@@ -15,7 +15,6 @@ MYSQL* connection;
 pthread_t thread_pool[30];
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-// ------------------------------- SERVER RELATED FUNCTIONS ------------------------------- //
 void make_query_send_json(int new_socket, MYSQL* connection, char query[], char* flag) {
     pthread_mutex_lock(&lock);
     if (mysql_query(connection, query)) {
@@ -104,6 +103,7 @@ void* connection_handler(void* socket_desc) {
     char buffer_json_msg[BUFFER_DIM];
 
     memset(&buffer_json_msg, 0, sizeof(buffer_json_msg));
+
     bool stop = false;
     while(!stop) {
         buffer_json_msg[0] = '\0';
@@ -193,8 +193,8 @@ int launch(server_t* server) {
 MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
     connection = mysql_init(NULL);
     if (!mysql_real_connect(connection, server, user, password, database, 0, NULL, 0)) {
-            fprintf(stderr, "%s\n", mysql_error(connection));
-            exit(1);
+        fprintf(stderr, "%s\n", mysql_error(connection));
+        exit(1); // CRASH
     }
     return connection;
 }

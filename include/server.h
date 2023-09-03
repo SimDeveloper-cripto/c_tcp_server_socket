@@ -17,9 +17,7 @@ typedef struct {
     u_long interface;
     int port;
     int backlog;        // To specify the amount of clients our server can handle.
-    
     int socket;         // It specifies the socket descriptor.
-
     struct sockaddr_in address;
 } server_t;
 

@@ -23,22 +23,6 @@ char* util_read_password_from_file();
 
 #ifdef UTILS_H_IMPLEMENTATION
 
-/*
-    // RETRIEVE MYSQL USER'S PASSWORD FROM A FILE [WE KEEP IT AS BACKUP FUNCTION]
-    char* util_read_password_from_file() {
-        FILE* f;
-        
-        if ((f = fopen("../password.txt", "r")) == NULL) {
-            perror("[-] Failed to read password from file (MySQL password).\n");
-            exit(1);
-        }
-
-        fgets(mysql_password_buffer, BUZZ_SIZE, f);
-        fclose(f);
-        return &mysql_password_buffer[0];
-    }
-*/
-
 char* util_read_password_from_file() {
     int fd = open(file_path, O_RDONLY);
     off_t fileSize = lseek(fd, 0, SEEK_END);

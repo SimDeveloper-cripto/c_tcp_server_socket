@@ -4,6 +4,8 @@
 #include <mysql.h>
 #include <stdio.h>
 
+// SERVER'S HELPER LIBRARY
+
 // ...
 
 /* FUNCTIONS */

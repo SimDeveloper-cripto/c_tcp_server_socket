@@ -75,7 +75,6 @@ void send_random_code(int new_socket) {
         exit(1);
     }
     json_object_put(json);
-    return;
 }
 
 bool exists(MYSQL* connection, char query[], pthread_mutex_t lock) {
