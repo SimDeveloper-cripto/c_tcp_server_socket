@@ -10,8 +10,8 @@ Use this project as an example of how to interface yourself with: <br />
 &emsp; 3. <json-c/json.h> <br /> <br />
 
 Just two more things: <br />
-&emsp; * The entire API is defined in include/server.h <br />
-&emsp; * In include/utils.h you can find all utilities (like database name, db user name, etc...) <br />
+&emsp; 1. The entire API is defined in include/server.h <br />
+&emsp; 2. In include/utils.h you can find all utilities (like database name, db user name, etc...) <br />
 The development process of this project took place in a Linux environment, to be specific: Ubuntu20.04.6 and Ubuntu22.04.3. <br />
 
 ## Get started with MySQL on Ubuntu
