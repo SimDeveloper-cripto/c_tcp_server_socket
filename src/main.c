@@ -203,7 +203,7 @@ MYSQL* init_mysql_connection(MYSQL* connection, char* password) {
 int main(int argc, char** argv) {
     pthread_mutex_init(&lock, NULL);
 
-    server_t server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 10);
+    server_t server = create_server(AF_INET, SOCK_STREAM, 0, INADDR_ANY, 6969, 20);
     if (launch(&server) == EXIT_FAILURE) {
         printf("PROGRAM ENDED STATUS [ ERROR ]\n");
         pthread_mutex_destroy(&lock);
